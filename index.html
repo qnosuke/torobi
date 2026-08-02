@@ -71,6 +71,21 @@
   }
   .toggle.on { background: var(--ember-dim); color: var(--text); }
 
+  /* ---- week stepper ---- */
+  .stepper { display: flex; flex: 1; align-items: center; gap: 4px; background: var(--surface-2); border-radius: 10px; padding: 3px; }
+  .stepper button {
+    flex: 0 0 44px; border: 0; border-radius: 8px; padding: 8px 0;
+    background: transparent; color: var(--ember);
+    font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer;
+  }
+  .stepper button:active { background: var(--ember-dim); color: var(--text); }
+  .stepper .week-disp { flex: 1; text-align: center; font-size: 13px; font-weight: 600; }
+  .stepper .week-disp small { color: var(--text-dim); font-weight: 600; }
+
+  /* ---- howto ---- */
+  .howto .howto-title { font-size: 13px; font-weight: 700; color: var(--ember); margin-bottom: 6px; }
+  .howto .howto-text { font-size: 13px; line-height: 1.8; color: var(--text); }
+
   /* ---- exercise list ---- */
   .ex-list { display: flex; flex-wrap: wrap; gap: 8px; }
   .chip {
@@ -150,6 +165,14 @@
 
   <div class="card settings">
     <div class="row">
+      <span class="label">週</span>
+      <div class="stepper">
+        <button id="weekMinus">−</button>
+        <div class="week-disp" id="weekDisp"></div>
+        <button id="weekPlus">＋</button>
+      </div>
+    </div>
+    <div class="row">
       <span class="label">メニュー</span>
       <div class="seg" id="daySeg">
         <button data-day="mon">月（肩）</button>
@@ -178,6 +201,11 @@
     <div class="ex-list" id="exList"></div>
   </div>
 
+  <div class="card howto" id="howtoCard" style="display:none">
+    <div class="howto-title" id="howtoTitle"></div>
+    <div class="howto-text" id="howtoText"></div>
+  </div>
+
   <div class="card display">
     <div class="beat" id="beatFlash"></div>
     <div class="set-label" id="setLabel"></div>
@@ -198,7 +226,7 @@
   </div>
 
   <div class="hint">
-    メニューは曜日から自動選択されます（月〜水＝月メニュー、木〜日＝木メニュー）。ウォームアップは3分・4ステップを音で切り替えながらガイドします。各種目、1セット目はストップウォッチで限界の直前まで。止めた秒数の8割が2セット目以降のカウントダウンに自動セットされます。メトロノーム（♪）は下ろし始めが低い音・上げ始めが高い音。♪をタップすると確認音が鳴ります。音が出ないときは本体の音量を上げてください。
+    種目は「週」に合わせてプログラムの段階から自動で選ばれます（週は一度合わせれば毎週自動で進みます）。第7週以降は単関節種目のテンポが自動で4秒↓2秒↑になります。メニューは曜日から自動選択（月〜水＝月、木〜日＝木）。ウォームアップは3分・4ステップを音で切り替えながらガイドします。各種目、1セット目はストップウォッチで限界の直前まで。止めた秒数の8割が2セット目以降のカウントダウンに自動セットされます。メトロノーム（♪）は下ろし始めが低い音・上げ始めが高い音。♪をタップすると確認音が鳴ります。音が出ないときは本体の音量を上げてください。
   </div>
 </div>
 
@@ -206,21 +234,63 @@
 (() => {
   "use strict";
 
-  // ---- menu data（トロビ 12週プログラム v0.2 の1回の構成）----
-  const COMMON_EX = [
-    { name: "腕立て伏せ", note: "押す" },
-    { name: "テーブルロー", note: "引く" },
-    { name: "スクワット系", note: "しゃがむ・左右" },
-    { name: "RDL系", note: "股関節・左右" },
+  // ---- menu data（トロビ 12週プログラム v0.2）----
+  // 週ごとの段階: 第1〜2週 / 第3〜6週 / 第7週〜(第11〜12週は同じ種目から自分で選ぶ)
+  const PHASES = [
+    { from: 1, to: 2, label: "火をつける" },
+    { from: 3, to: 6, label: "とろ火" },
+    { from: 7, to: 10, label: "火加減を覚える" },
+    { from: 11, to: 12, label: "自分で焚く" },
   ];
-  const DAY_EX = {
+  const phaseIndex = week => week <= 2 ? 0 : week <= 6 ? 1 : 2;
+  const phaseLabel = week => PHASES.find(p => week >= p.from && week <= p.to).label;
+
+  const SLOTS = [
+    { slot: "押す", byPhase: [
+      { name: "膝つき腕立て伏せ", weight: "自重",
+        howto: "膝をつき、頭から膝まで一直線。胸が床から拳ひとつ分まで下ろす。肘は真横ではなく体から45度。腰を落とさない。" },
+      { name: "腕立て伏せ", weight: "自重",
+        howto: "頭から踵まで一直線。胸が床から拳ひとつ分まで。肘は体から45度。腰を落とさない。きつければ膝つきを続けてよい。" },
+      { name: "腕立て伏せ（足を椅子に）", weight: "自重",
+        howto: "足を椅子に乗せて行う。頭から踵まで一直線、胸は拳ひとつ分まで、肘は体から45度。腰を落とさない。" },
+    ]},
+    { slot: "引く", byPhase: [
+      { name: "ワンハンドロー", weight: "2.3kg",
+        howto: "片手と片膝を椅子や台に置き、背中を真っ直ぐ。ダンベルを脇腹に向かって引き上げ、ゆっくり下ろす。左右それぞれ計測。" },
+      { name: "テーブルロー", weight: "自重",
+        howto: "丈夫な机の下に仰向けで潜り、縁を掴んで胸を天板に引き寄せる。体は一直線。膝を曲げると易しくなる。※机が動かない・体重に耐えることを必ず確認。不安ならワンハンドロー（5.4kg）を継続。" },
+      { name: "テーブルロー（足伸ばし）", weight: "自重",
+        howto: "テーブルローの足を伸ばし、体を水平に近づけて行う。体は一直線のまま胸を天板へ。※机の安定を必ず確認。" },
+    ]},
+    { slot: "しゃがむ", byPhase: [
+      { name: "自重スプリットスクワット", weight: "自重・左右",
+        howto: "足を前後に開き、後ろ膝を床に向けて真下に下ろす。上体は真っ直ぐ、前膝はつま先より前に出さない。左右それぞれ計測。" },
+      { name: "スプリットスクワット", weight: "5.4kg×2・左右",
+        howto: "両手にダンベルを持ち体側に垂らす。後ろ膝を床に向けて真下に下ろし、上体は真っ直ぐ。前膝はつま先より前に出さない。左右それぞれ計測。" },
+      { name: "ブルガリアンスクワット", weight: "5.4kg×2・左右",
+        howto: "後ろ足の甲を椅子に乗せ、両手にダンベル。後ろ膝を真下に下ろす。上体は真っ直ぐ、前膝はつま先より前に出さない。左右それぞれ計測。" },
+    ]},
+    { slot: "股関節", byPhase: [
+      { name: "ヒップリフト", weight: "自重",
+        howto: "仰向けで膝を立て、かかとで床を押してお尻を持ち上げる。肩から膝まで一直線になったらお尻を締め、ゆっくり下ろす。" },
+      { name: "ルーマニアンデッドリフト", weight: "5.4kg×2",
+        howto: "膝を軽く曲げたまま固定し、股関節から折る。ダンベルを脚に沿わせて膝下まで。太もも裏が伸びたら戻る。背中が丸まったら即中止。" },
+      { name: "片脚ルーマニアンデッドリフト", weight: "5.4kg×1〜2・左右",
+        howto: "片脚で立ち、膝を軽く曲げたまま股関節から折る。ダンベルを脚に沿わせて下ろし、背中は最後まで真っ直ぐ。丸まったら即中止。左右それぞれ計測。" },
+    ]},
+  ];
+  const ISO_EX = {
     mon: [
-      { name: "サイドレイズ", note: "肩" },
-      { name: "リアレイズ", note: "背中上部" },
+      { name: "サイドレイズ", weight: "2.3kg×2",
+        howto: "直立して肘を軽く曲げ、腕を真横に開いて肩の高さで止める。それ以上は上げない。肩をすくめない（首に力が入ったらフォーム崩れ）。下ろすときも力を抜かない。" },
+      { name: "リアレイズ", weight: "2.3kg×2",
+        howto: "上体を45度前傾。肘を軽く曲げ、腕を後方・斜め上に開く。肩甲骨を寄せることより腕を開くことを意識。首をすくめない。" },
     ],
     thu: [
-      { name: "カール", note: "腕・前" },
-      { name: "キックバック", note: "腕・裏" },
+      { name: "カール", weight: "2.3kg×2",
+        howto: "肘を体の横に固定して動かさない。ダンベルだけを上げ、上げきったところで一瞬締める。軽すぎると感じたら5.4kgに上げてよい（第3週以降）。" },
+      { name: "キックバック", weight: "2.3kg×2",
+        howto: "上体を前傾し、上腕を体側に固定。肘から先だけを後方に伸ばす。上腕が動いたら効いていない。" },
     ],
   };
   // ウォームアップ3分。足踏みのみ時間指定、残りは回数目安を時間に割り付け
@@ -237,8 +307,32 @@
     return (d >= 1 && d <= 3) ? "mon" : "thu";
   }
 
+  // 週はlocalStorageに保存し、実際の週の経過に合わせて自動で進める
+  const mondayOf = d => {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    x.setDate(x.getDate() - (x.getDay() + 6) % 7);
+    return x;
+  };
+  function loadWeek() {
+    try {
+      const s = JSON.parse(localStorage.getItem("torobi.week"));
+      if (s && s.week && s.anchor) {
+        const diff = Math.round((mondayOf(new Date()) - new Date(s.anchor)) / 604800000);
+        return Math.min(12, Math.max(1, s.week + diff));
+      }
+    } catch (e) { /* 壊れた保存値は無視 */ }
+    return 1;
+  }
+  function saveWeek(w) {
+    try {
+      localStorage.setItem("torobi.week", JSON.stringify({ week: w, anchor: mondayOf(new Date()).toISOString() }));
+    } catch (e) { /* プライベートブラウズ等では保存しない */ }
+  }
+
   // ---- state ----
   const state = {
+    week: loadWeek(),
     day: autoDay(),
     exercises: [],       // [{name, note, sets:[], baseSeconds, targetSeconds, setNo}]
     exIndex: 0,
@@ -257,10 +351,14 @@
   };
 
   function buildExercises() {
+    const p = phaseIndex(state.week);
+    const main4 = SLOTS.map(s => ({ ...s.byPhase[p], slot: s.slot }));
+    const iso2 = ISO_EX[state.day].map(e => ({ ...e, slot: "単関節", isolation: true }));
     state.exercises = [
       { warmup: true, name: "ウォームアップ", note: "3分", done: false },
-      ...[...COMMON_EX, ...DAY_EX[state.day]].map(e => ({
-        ...e, sets: [], baseSeconds: null, targetSeconds: null, setNo: 1,
+      ...[...main4, ...iso2].map(e => ({
+        ...e, note: `${e.slot}・${e.weight}`,
+        sets: [], baseSeconds: null, targetSeconds: null, setNo: 1,
       })),
     ];
     state.exIndex = 0;
@@ -281,6 +379,10 @@
   const daySeg = $("daySeg");
   const prepSeg = $("prepSeg");
   const exList = $("exList");
+  const weekDisp = $("weekDisp");
+  const howtoCard = $("howtoCard");
+  const howtoTitle = $("howtoTitle");
+  const howtoText = $("howtoText");
 
   // ---- audio ----
   // iOS Safariでは、(1) AudioContextはユーザー操作内で生成・resumeが必要、
@@ -360,6 +462,31 @@
   const fmt = sec => String(Math.max(0, Math.ceil(sec)));
 
   // ---- rendering ----
+  function renderWeek() {
+    weekDisp.innerHTML = `第${state.week}週 <small>／ ${phaseLabel(state.week)}</small>`;
+  }
+
+  function renderHowto() {
+    const ex = cur();
+    if (ex.warmup) {
+      howtoCard.style.display = "none";
+      return;
+    }
+    howtoCard.style.display = "";
+    howtoTitle.textContent = `${ex.name}（${ex.weight}）のやり方`;
+    howtoText.textContent = ex.howto;
+  }
+
+  // 第7週以降の単関節はテンポを4秒下ろす/2秒上げるに変更(プログラム仕様)。
+  // 種目を切り替えたときに自動設定する。手動タップでの上書きも可能。
+  function setTempo(down) {
+    state.tempoDown = down;
+    tempoSeg.querySelectorAll("button").forEach(b => b.classList.toggle("on", Number(b.dataset.down) === down));
+  }
+  function autoTempo() {
+    setTempo(cur().isolation && state.week >= 7 ? 4 : 2);
+  }
+
   function renderExList() {
     exList.innerHTML = state.exercises.map((e, i) => {
       const done = e.warmup
@@ -405,6 +532,7 @@
       mainBtn.classList.remove("running");
       renderExList();
       renderSets();
+      renderHowto();
       return;
     }
     if (ex.setNo === 1) {
@@ -424,6 +552,7 @@
     mainBtn.classList.remove("running");
     renderExList();
     renderSets();
+    renderHowto();
   }
 
   // ---- metronome / phase within a rep ----
@@ -648,6 +777,19 @@
   function gotoExercise(i) {
     stopIfRunning();
     state.exIndex = i;
+    autoTempo();
+    updateIdleUI();
+  }
+
+  function changeWeek(delta) {
+    const w = Math.min(12, Math.max(1, state.week + delta));
+    if (w === state.week) return;
+    stopIfRunning();
+    state.week = w;
+    saveWeek(w);
+    renderWeek();
+    buildExercises();
+    autoTempo();
     updateIdleUI();
   }
 
@@ -673,6 +815,8 @@
 
   $("nextExerciseBtn").addEventListener("click", nextExercise);
   $("resetExBtn").addEventListener("click", resetCurrentExercise);
+  $("weekMinus").addEventListener("click", () => changeWeek(-1));
+  $("weekPlus").addEventListener("click", () => changeWeek(1));
 
   exList.addEventListener("click", e => {
     const btn = e.target.closest(".chip");
@@ -687,6 +831,7 @@
     state.day = btn.dataset.day;
     daySeg.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.day === state.day));
     buildExercises();
+    autoTempo();
     updateIdleUI();
   });
 
@@ -719,7 +864,10 @@
 
   // ---- init ----
   daySeg.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.day === state.day));
+  saveWeek(state.week);
+  renderWeek();
   buildExercises();
+  autoTempo();
   updateIdleUI();
 })();
 </script>
