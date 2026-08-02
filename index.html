@@ -198,7 +198,7 @@
   </div>
 
   <div class="hint">
-    メニューは曜日から自動選択されます（月〜水＝月メニュー、木〜日＝木メニュー）。各種目、1セット目はストップウォッチで限界の直前まで。止めた秒数の8割が2セット目以降のカウントダウンに自動セットされます。メトロノーム（♪）は下ろし始めが低い音・上げ始めが高い音。♪をタップすると確認音が鳴ります。音が出ないときは本体の音量を上げてください。
+    メニューは曜日から自動選択されます（月〜水＝月メニュー、木〜日＝木メニュー）。ウォームアップは3分・4ステップを音で切り替えながらガイドします。各種目、1セット目はストップウォッチで限界の直前まで。止めた秒数の8割が2セット目以降のカウントダウンに自動セットされます。メトロノーム（♪）は下ろし始めが低い音・上げ始めが高い音。♪をタップすると確認音が鳴ります。音が出ないときは本体の音量を上げてください。
   </div>
 </div>
 
@@ -223,6 +223,14 @@
       { name: "キックバック", note: "腕・裏" },
     ],
   };
+  // ウォームアップ3分。足踏みのみ時間指定、残りは回数目安を時間に割り付け
+  const WARMUP_STEPS = [
+    { name: "その場足踏み", sec: 60 },
+    { name: "肩回し 前後各10回", sec: 40 },
+    { name: "自重スクワット ゆっくり10回", sec: 40 },
+    { name: "股関節回し 各10回", sec: 40 },
+  ];
+  const WARMUP_TOTAL = WARMUP_STEPS.reduce((a, s) => a + s.sec, 0);
   // 月〜水は月メニュー、木〜日は木メニュー
   function autoDay() {
     const d = new Date().getDay(); // Sun=0 ... Sat=6
@@ -249,9 +257,12 @@
   };
 
   function buildExercises() {
-    state.exercises = [...COMMON_EX, ...DAY_EX[state.day]].map(e => ({
-      ...e, sets: [], baseSeconds: null, targetSeconds: null, setNo: 1,
-    }));
+    state.exercises = [
+      { warmup: true, name: "ウォームアップ", note: "3分", done: false },
+      ...[...COMMON_EX, ...DAY_EX[state.day]].map(e => ({
+        ...e, sets: [], baseSeconds: null, targetSeconds: null, setNo: 1,
+      })),
+    ];
     state.exIndex = 0;
   }
   const cur = () => state.exercises[state.exIndex];
@@ -351,13 +362,23 @@
   // ---- rendering ----
   function renderExList() {
     exList.innerHTML = state.exercises.map((e, i) => {
-      const done = e.sets.length > 0 ? `<span class="done">✓</span><span class="cnt">${e.sets.length}</span>` : "";
+      const done = e.warmup
+        ? (e.done ? `<span class="done">✓</span>` : "")
+        : (e.sets.length > 0 ? `<span class="done">✓</span><span class="cnt">${e.sets.length}</span>` : "");
       return `<button class="chip${i === state.exIndex ? " on" : ""}" data-i="${i}">${e.name}${done}</button>`;
     }).join("");
   }
 
   function renderSets() {
     const ex = cur();
+    if (ex.warmup) {
+      setList.innerHTML = WARMUP_STEPS.map((s, i) => `<div class="set-row">
+        <span class="n">${i + 1}</span>
+        <span class="s">${s.name}</span>
+        <span class="r">${s.sec}秒</span>
+      </div>`).join("");
+      return;
+    }
     if (ex.sets.length === 0) {
       setList.innerHTML = `<div class="empty">${ex.name}：まだ記録がありません</div>`;
       return;
@@ -374,6 +395,18 @@
 
   function updateIdleUI() {
     const ex = cur();
+    if (ex.warmup) {
+      setLabel.innerHTML = `<b>ウォームアップ</b>（3分）${ex.done ? " ✓済" : ""}`;
+      subDisp.textContent = "4つのステップを音で切り替えながらガイドします";
+      timeDisp.textContent = String(WARMUP_TOTAL);
+      timeDisp.className = "time";
+      mainBtn.textContent = "ウォームアップ開始";
+      phaseDisp.textContent = "";
+      mainBtn.classList.remove("running");
+      renderExList();
+      renderSets();
+      return;
+    }
     if (ex.setNo === 1) {
       setLabel.innerHTML = `<b>${ex.name}</b>（${ex.note}）─ セット1・全力`;
       subDisp.textContent = "タップで開始、限界が来たらタップで終了";
@@ -419,7 +452,31 @@
     const elapsed = (now - state.startTime) / 1000;
     state.elapsed = elapsed;
 
-    if (state.mode === "prep") {
+    if (state.mode === "warmup") {
+      if (elapsed >= WARMUP_TOTAL) {
+        finishWarmup();
+        return;
+      }
+      let acc = 0, idx = 0, stepRemain = 0;
+      for (let i = 0; i < WARMUP_STEPS.length; i++) {
+        if (elapsed < acc + WARMUP_STEPS[i].sec) {
+          idx = i;
+          stepRemain = acc + WARMUP_STEPS[i].sec - elapsed;
+          break;
+        }
+        acc += WARMUP_STEPS[i].sec;
+      }
+      timeDisp.textContent = fmt(stepRemain);
+      setLabel.innerHTML = `<b>ウォームアップ</b> ─ ${idx + 1}/${WARMUP_STEPS.length}`;
+      subDisp.innerHTML = `<b>${WARMUP_STEPS[idx].name}</b>`;
+      if (idx !== state.lastWuStep) {
+        state.lastWuStep = idx;
+        if (state.metronome && elapsed > 0.05) beep(990, 0.2, 0.6);
+        if (navigator.vibrate) navigator.vibrate(150);
+        beatFlash.classList.add("flash");
+        setTimeout(() => beatFlash.classList.remove("flash"), 100);
+      }
+    } else if (state.mode === "prep") {
       const remain = state.prep - elapsed;
       if (remain <= 0) {
         startWork();
@@ -456,7 +513,16 @@
     acquireWakeLock();
     state.running = true;
     state.lastBeatIndex = -1;
-    if (state.prep > 0) {
+    if (cur().warmup) {
+      // ウォームアップは準備カウントなしで即開始
+      state.mode = "warmup";
+      state.startTime = performance.now();
+      state.lastWuStep = -1;
+      timeDisp.className = "time count-down";
+      phaseDisp.textContent = "";
+      mainBtn.textContent = "中断";
+      mainBtn.classList.add("running");
+    } else if (state.prep > 0) {
       state.mode = "prep";
       state.startTime = performance.now();
       state.lastPrepSec = -1;
@@ -490,6 +556,19 @@
     releaseWakeLock();
     stopSilentLoop();
     updateIdleUI();
+  }
+
+  function finishWarmup() {
+    state.running = false;
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    releaseWakeLock();
+    alarm();
+    setTimeout(stopSilentLoop, 1500);
+    cur().done = true;
+    // 完了したら最初の種目へ自動で進む
+    state.exIndex = Math.min(state.exIndex + 1, state.exercises.length - 1);
+    updateIdleUI();
+    subDisp.innerHTML = "ウォームアップ完了。<b>本番へ 🔥</b>";
   }
 
   function stop() {
@@ -555,10 +634,14 @@
   function resetCurrentExercise() {
     stopIfRunning();
     const ex = cur();
-    ex.sets = [];
-    ex.baseSeconds = null;
-    ex.targetSeconds = null;
-    ex.setNo = 1;
+    if (ex.warmup) {
+      ex.done = false;
+    } else {
+      ex.sets = [];
+      ex.baseSeconds = null;
+      ex.targetSeconds = null;
+      ex.setNo = 1;
+    }
     updateIdleUI();
   }
 
@@ -581,7 +664,8 @@
   // ---- events ----
   mainBtn.addEventListener("click", () => {
     if (state.running) {
-      state.mode === "prep" ? cancelPrep() : stop();
+      // 準備カウント中とウォームアップ中は記録せず中断扱い
+      (state.mode === "prep" || state.mode === "warmup") ? cancelPrep() : stop();
     } else {
       start();
     }
