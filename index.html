@@ -56,7 +56,7 @@
   .settings { display: flex; flex-direction: column; gap: 8px; }
 
   .row { display: flex; gap: 8px; align-items: center; }
-  .row .label { font-size: 12px; color: var(--text-dim); flex: 0 0 3.5em; }
+  .row .label { font-size: 12px; color: var(--text-dim); flex: 0 0 4.2em; white-space: nowrap; }
   .seg { display: flex; flex: 1; background: var(--surface-2); border-radius: 10px; padding: 3px; }
   .seg button {
     flex: 1; border: 0; background: transparent; color: var(--text-dim);
@@ -81,6 +81,33 @@
   .stepper button:active { background: var(--ember-dim); color: var(--text); }
   .stepper .week-disp { flex: 1; text-align: center; font-size: 13px; font-weight: 600; }
   .stepper .week-disp small { color: var(--text-dim); font-weight: 600; }
+
+  /* ---- body composition ---- */
+  .body-title, .export-title { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; }
+  .export-title span { color: var(--ember); }
+  .body-inputs { display: flex; gap: 8px; }
+  .body-inputs label {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;
+    font-size: 11px; color: var(--text-dim); white-space: nowrap;
+  }
+  .body-inputs input {
+    width: 100%; min-width: 0; border: 0; border-radius: 8px;
+    background: var(--surface-2); color: var(--text);
+    font-size: 15px; font-family: inherit; font-variant-numeric: tabular-nums;
+    padding: 8px 6px; text-align: center;
+  }
+  .body-inputs input::placeholder { color: #6b6154; }
+  .body-inputs input:focus { outline: 2px solid var(--ember-dim); }
+
+  /* ---- export ---- */
+  .export-actions { display: flex; gap: 8px; }
+  .export-actions button {
+    flex: 1; border: 0; border-radius: 10px; padding: 12px 8px;
+    background: var(--surface-2); color: var(--text);
+    font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+  }
+  .export-actions button:active { background: var(--ember-dim); }
+  .export-msg { font-size: 12px; color: var(--green); min-height: 18px; margin-top: 8px; }
 
   /* ---- howto ---- */
   .howto .howto-title { font-size: 13px; font-weight: 700; color: var(--ember); margin-bottom: 6px; }
@@ -225,8 +252,26 @@
     <div class="empty">まだ記録がありません</div>
   </div>
 
+  <div class="card body">
+    <div class="body-title">朝の体組成（任意）</div>
+    <div class="body-inputs">
+      <label><span>体重 kg</span><input type="number" inputmode="decimal" step="0.1" id="bodyW" placeholder="61.8"></label>
+      <label><span>体脂肪 %</span><input type="number" inputmode="decimal" step="0.1" id="bodyF" placeholder="22.4"></label>
+      <label><span>骨格筋 %</span><input type="number" inputmode="decimal" step="0.1" id="bodyM" placeholder="33.8"></label>
+    </div>
+  </div>
+
+  <div class="card export">
+    <div class="export-title">記録の書き出し <span id="logCount"></span></div>
+    <div class="export-actions">
+      <button id="copyBtn">今日の記録をコピー</button>
+      <button id="csvBtn">全履歴をCSVで書き出す</button>
+    </div>
+    <div class="export-msg" id="exportMsg"></div>
+  </div>
+
   <div class="hint">
-    種目は「週」に合わせてプログラムの段階から自動で選ばれます（週は一度合わせれば毎週自動で進みます）。第7週以降は単関節種目のテンポが自動で4秒↓2秒↑になります。メニューは曜日から自動選択（月〜水＝月、木〜日＝木）。ウォームアップは3分・4ステップを音で切り替えながらガイドします。各種目、1セット目はストップウォッチで限界の直前まで。止めた秒数の8割が2セット目以降のカウントダウンに自動セットされます。メトロノーム（♪）は下ろし始めが低い音・上げ始めが高い音。♪をタップすると確認音が鳴ります。音が出ないときは本体の音量を上げてください。
+    種目は「週」に合わせてプログラムの段階から自動で選ばれます（週は一度合わせれば毎週自動で進みます）。第7週以降は単関節種目のテンポが自動で4秒↓2秒↑になります。メニューは曜日から自動選択（月〜水＝月、木〜日＝木）。ウォームアップは3分・4ステップを音で切り替えながらガイドします。各種目、1セット目はストップウォッチで限界の直前まで。止めた秒数の8割が2セット目以降のカウントダウンに自動セットされます。メトロノーム（♪）は下ろし始めが低い音・上げ始めが高い音。♪をタップすると確認音が鳴ります。音が出ないときは本体の音量を上げてください。記録はこの端末に自動保存され、ページを閉じても残ります（1セット目は前回比も表示）。「コピー」はその日の記録をプログラムの記録形式でクリップボードへ、「CSV」は全履歴を表計算ソフト向けに書き出します。
   </div>
 </div>
 
@@ -330,6 +375,68 @@
     } catch (e) { /* プライベートブラウズ等では保存しない */ }
   }
 
+  // ---- 記録の保存（localStorage）----
+  // { "2026-08-03": { week, day, sets:[{ex,slot,no,sec}], body:{w,f,m} } }
+  const LOG_KEY = "torobi.log";
+  const todayKey = () => {
+    const d = new Date();
+    const p = n => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  };
+  const WDAY = ["日", "月", "火", "水", "木", "金", "土"];
+  function loadLog() {
+    try {
+      return JSON.parse(localStorage.getItem(LOG_KEY)) || {};
+    } catch (e) { return {}; }
+  }
+  function saveLog(log) {
+    try {
+      localStorage.setItem(LOG_KEY, JSON.stringify(log));
+    } catch (e) { /* プライベートブラウズ等では保存しない */ }
+  }
+  function todayEntry(log) {
+    const k = todayKey();
+    if (!log[k]) log[k] = { week: state.week, day: state.day, sets: [], body: {} };
+    log[k].week = state.week;
+    log[k].day = state.day;
+    return log[k];
+  }
+  // 同じ種目・同じセット番号は上書き（やり直しに対応）
+  function recordSet(exName, slot, no, sec) {
+    const log = loadLog();
+    const e = todayEntry(log);
+    const i = e.sets.findIndex(s => s.ex === exName && s.no === no);
+    const row = { ex: exName, slot, no, sec };
+    i >= 0 ? e.sets[i] = row : e.sets.push(row);
+    saveLog(log);
+    renderLogCount();
+  }
+  function clearRecordedExercise(exName) {
+    const log = loadLog();
+    const e = todayEntry(log);
+    e.sets = e.sets.filter(s => s.ex !== exName);
+    saveLog(log);
+    renderLogCount();
+  }
+  function saveBody() {
+    const log = loadLog();
+    const e = todayEntry(log);
+    const num = el => (el.value === "" ? undefined : Number(el.value));
+    e.body = { w: num(bodyW), f: num(bodyF), m: num(bodyM) };
+    saveLog(log);
+  }
+  // 同じ種目の直近（今日より前）の1セット目の秒数
+  function lastTimeSeconds(exName) {
+    const log = loadLog();
+    const k = todayKey();
+    const days = Object.keys(log).filter(d => d < k).sort().reverse();
+    for (const d of days) {
+      const hit = (log[d].sets || []).find(s => s.ex === exName && s.no === 1);
+      if (hit) return { sec: hit.sec, date: d };
+    }
+    return null;
+  }
+
   // ---- state ----
   const state = {
     week: loadWeek(),
@@ -361,7 +468,26 @@
         sets: [], baseSeconds: null, targetSeconds: null, setNo: 1,
       })),
     ];
+    restoreToday();
     state.exIndex = 0;
+  }
+
+  // リロードしても、その日ここまでの記録を画面に復元する
+  function restoreToday() {
+    const e = loadLog()[todayKey()];
+    if (!e) return;
+    state.exercises.forEach(ex => {
+      if (ex.warmup) return;
+      const mine = (e.sets || []).filter(s => s.ex === ex.name).sort((a, b) => a.no - b.no);
+      if (mine.length === 0) return;
+      ex.sets = mine.map(s => ({ no: s.no, seconds: s.sec }));
+      const first = mine.find(s => s.no === 1);
+      if (first) {
+        ex.baseSeconds = first.sec;
+        ex.targetSeconds = Math.max(1, Math.round(first.sec * 0.8));
+      }
+      ex.setNo = mine[mine.length - 1].no + 1;
+    });
   }
   const cur = () => state.exercises[state.exIndex];
 
@@ -383,6 +509,11 @@
   const howtoCard = $("howtoCard");
   const howtoTitle = $("howtoTitle");
   const howtoText = $("howtoText");
+  const bodyW = $("bodyW");
+  const bodyF = $("bodyF");
+  const bodyM = $("bodyM");
+  const exportMsg = $("exportMsg");
+  const logCount = $("logCount");
 
   // ---- audio ----
   // iOS Safariでは、(1) AudioContextはユーザー操作内で生成・resumeが必要、
@@ -461,6 +592,113 @@
   const toReps = sec => Math.floor(sec / repSeconds());
   const fmt = sec => String(Math.max(0, Math.ceil(sec)));
 
+  // ---- 書き出し ----
+  function renderLogCount() {
+    const log = loadLog();
+    const days = Object.keys(log).filter(d => (log[d].sets || []).length > 0).length;
+    logCount.textContent = days > 0 ? `（${days}日分）` : "";
+  }
+
+  // プログラム資料の記録形式（1セット目の秒数と体組成だけ）
+  function buildTodayText() {
+    const log = loadLog();
+    const k = todayKey();
+    const e = log[k];
+    if (!e || (e.sets || []).length === 0) return null;
+    const firsts = e.sets.filter(s => s.no === 1);
+    const line = names => names.map(s => `${s.ex} ${s.sec}`).join(" / ");
+    const main = firsts.filter(s => s.slot !== "単関節");
+    const iso = firsts.filter(s => s.slot === "単関節");
+    const lines = [`${k}（${WDAY[new Date(k + "T00:00:00").getDay()]}）`];
+    if (main.length) lines.push(line(main));
+    if (iso.length) lines.push(line(iso));
+    const b = e.body || {};
+    const body = [
+      b.w != null ? `体重 ${b.w}` : null,
+      b.f != null ? `体脂肪 ${b.f}` : null,
+      b.m != null ? `骨格筋 ${b.m}` : null,
+    ].filter(Boolean);
+    if (body.length) lines.push(body.join(" / "));
+    return lines.join("\n");
+  }
+
+  function buildCsv() {
+    const log = loadLog();
+    const rows = [["日付", "週", "メニュー", "種目", "枠", "セット", "秒数", "回数換算", "体重", "体脂肪率", "骨格筋率"]];
+    Object.keys(log).sort().forEach(date => {
+      const e = log[date];
+      const b = e.body || {};
+      // 種目ごとにまとめ、その中はセット順（種目の順序は記録された順）
+      const order = [];
+      (e.sets || []).forEach(s => { if (!order.includes(s.ex)) order.push(s.ex); });
+      const sorted = (e.sets || []).slice().sort(
+        (a, c) => order.indexOf(a.ex) - order.indexOf(c.ex) || a.no - c.no);
+      sorted.forEach(s => {
+        rows.push([
+          date, e.week, e.day === "mon" ? "月" : "木", s.ex, s.slot, s.no, s.sec,
+          Math.floor(s.sec / 4), // 記録時のテンポに関わらず1回=4秒で概算
+          b.w ?? "", b.f ?? "", b.m ?? "",
+        ]);
+      });
+    });
+    if (rows.length === 1) return null;
+    const esc = v => {
+      const t = String(v);
+      return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+    };
+    return rows.map(r => r.map(esc).join(",")).join("\r\n");
+  }
+
+  function flash(msg, ok = true) {
+    exportMsg.textContent = msg;
+    exportMsg.style.color = ok ? "var(--green)" : "var(--ember)";
+    setTimeout(() => { exportMsg.textContent = ""; }, 4000);
+  }
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (e) {
+      // 旧iOS Safari向けフォールバック
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
+
+  async function exportCsv() {
+    const csv = buildCsv();
+    if (!csv) { flash("まだ書き出す記録がありません", false); return; }
+    // Excel/Numbersでの文字化けを避けるためBOM付きUTF-8
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const file = new File([blob], `torobi-${todayKey()}.csv`, { type: "text/csv" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: "トロビ 記録" });
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return; // ユーザーがキャンセル
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    flash("CSVを書き出しました");
+  }
+
   // ---- rendering ----
   function renderWeek() {
     weekDisp.innerHTML = `第${state.week}週 <small>／ ${phaseLabel(state.week)}</small>`;
@@ -537,7 +775,10 @@
     }
     if (ex.setNo === 1) {
       setLabel.innerHTML = `<b>${ex.name}</b>（${ex.note}）─ セット1・全力`;
-      subDisp.textContent = "タップで開始、限界が来たらタップで終了";
+      const prev = lastTimeSeconds(ex.name);
+      subDisp.innerHTML = prev
+        ? `前回 <b>${prev.sec}秒</b>（${prev.date.slice(5)}）。上回るのが目標`
+        : "タップで開始、限界が来たらタップで終了";
       timeDisp.textContent = "0";
       timeDisp.className = "time";
       mainBtn.textContent = "開始";
@@ -714,12 +955,17 @@
       ex.targetSeconds = Math.max(1, Math.round(seconds * 0.8));
       ex.sets.push({ no: ex.setNo, seconds });
       timeDisp.className = "time done";
-      subDisp.innerHTML = `記録 <b>${seconds}秒</b> ＝ 約${toReps(seconds)}回。次からは <b>${ex.targetSeconds}秒</b> で止めます`;
+      const prev = lastTimeSeconds(ex.name);
+      const diff = prev ? seconds - prev.sec : null;
+      const cmp = diff == null ? ""
+        : diff > 0 ? `前回より <b>+${diff}秒</b> 🔥 ` : diff < 0 ? `前回より ${diff}秒 ` : "前回と同じ ";
+      subDisp.innerHTML = `${cmp}記録 <b>${seconds}秒</b> ＝ 約${toReps(seconds)}回。次からは <b>${ex.targetSeconds}秒</b> で止めます`;
     } else {
       // カウントダウンを途中で止めた: 実際にやった秒数を記録
       ex.sets.push({ no: ex.setNo, seconds });
       subDisp.innerHTML = `セット${ex.setNo}：${seconds}秒で終了`;
     }
+    recordSet(ex.name, ex.slot, ex.setNo, seconds);
     ex.setNo += 1;
     phaseDisp.textContent = "";
     setLabel.innerHTML = `<b>${ex.name}</b> ─ セット${ex.setNo}・8割で止める`;
@@ -739,6 +985,7 @@
 
     const ex = cur();
     ex.sets.push({ no: ex.setNo, seconds: ex.targetSeconds });
+    recordSet(ex.name, ex.slot, ex.setNo, ex.targetSeconds);
     timeDisp.textContent = "0";
     timeDisp.className = "time done";
     phaseDisp.textContent = "";
@@ -766,6 +1013,7 @@
     if (ex.warmup) {
       ex.done = false;
     } else {
+      clearRecordedExercise(ex.name);
       ex.sets = [];
       ex.baseSeconds = null;
       ex.targetSeconds = null;
@@ -818,6 +1066,17 @@
   $("weekMinus").addEventListener("click", () => changeWeek(-1));
   $("weekPlus").addEventListener("click", () => changeWeek(1));
 
+  [bodyW, bodyF, bodyM].forEach(el => el.addEventListener("change", saveBody));
+
+  $("copyBtn").addEventListener("click", async () => {
+    const text = buildTodayText();
+    if (!text) { flash("今日の記録がまだありません", false); return; }
+    const ok = await copyText(text);
+    flash(ok ? "今日の記録をコピーしました" : "コピーできませんでした", ok);
+  });
+
+  $("csvBtn").addEventListener("click", exportCsv);
+
   exList.addEventListener("click", e => {
     const btn = e.target.closest(".chip");
     if (!btn) return;
@@ -869,6 +1128,13 @@
   buildExercises();
   autoTempo();
   updateIdleUI();
+  renderLogCount();
+  (() => {
+    const b = (loadLog()[todayKey()] || {}).body || {};
+    if (b.w != null) bodyW.value = b.w;
+    if (b.f != null) bodyF.value = b.f;
+    if (b.m != null) bodyM.value = b.m;
+  })();
 })();
 </script>
 </body>
