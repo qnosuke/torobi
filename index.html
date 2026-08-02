@@ -64,6 +64,7 @@
     font-family: inherit; cursor: pointer; transition: background .15s, color .15s;
   }
   .seg button.on { background: var(--ember-dim); color: var(--text); }
+  .seg button small { display: block; font-size: 10px; opacity: .7; font-weight: 600; margin-top: 1px; }
   .toggle {
     flex: 0 0 auto; border: 0; border-radius: 10px; padding: 11px 14px;
     background: var(--surface-2); color: var(--text-dim);
@@ -202,8 +203,8 @@
     <div class="row">
       <span class="label">メニュー</span>
       <div class="seg" id="daySeg">
-        <button data-day="mon">月（肩）</button>
-        <button data-day="thu">木（腕）</button>
+        <button data-day="mon">肩の日<small>週の前半</small></button>
+        <button data-day="thu">腕の日<small>週の後半</small></button>
       </div>
       <button class="toggle on" id="metroToggle">♪</button>
     </div>
@@ -271,7 +272,7 @@
   </div>
 
   <div class="hint">
-    種目は「週」に合わせてプログラムの段階から自動で選ばれます（週は一度合わせれば毎週自動で進みます）。第7週以降は単関節種目のテンポが自動で4秒↓2秒↑になります。メニューは曜日から自動選択（月〜水＝月、木〜日＝木）。ウォームアップは3分・4ステップを音で切り替えながらガイドします。各種目、1セット目はストップウォッチで限界の直前まで。止めた秒数の8割が2セット目以降のカウントダウンに自動セットされます。片側種目（ワンハンドロー・スプリット系・片脚RDL）は左→右で1セット。左右で限界が違うため、基準値と8割の目標もそれぞれ別に計算されます。メトロノーム（♪）は下ろし始めが低い音・上げ始めが高い音。♪をタップすると確認音が鳴ります。音が出ないときは本体の音量を上げてください。記録はこの端末に自動保存され、ページを閉じても残ります（1セット目は前回比も表示）。「コピー」はその日の記録をプログラムの記録形式でクリップボードへ、「CSV」は全履歴を表計算ソフト向けに書き出します。
+    種目は「週」に合わせてプログラムの段階から自動で選ばれます（週は一度合わせれば毎週自動で進みます）。第7週以降は単関節種目のテンポが自動で4秒↓2秒↑になります。メニューは2種類で、違うのは単関節2種目だけです（肩の日＝サイドレイズ・リアレイズ／腕の日＝カール・キックバック）。週の前半に開けば肩の日、後半なら腕の日が初期選択になりますが、曜日に縛られず、前回と違う方をタップして選べば大丈夫です。ウォームアップは3分・4ステップを音で切り替えながらガイドします。各種目、1セット目はストップウォッチで限界の直前まで。止めた秒数の8割が2セット目以降のカウントダウンに自動セットされます。片側種目（ワンハンドロー・スプリット系・片脚RDL）は左→右で1セット。左右で限界が違うため、基準値と8割の目標もそれぞれ別に計算されます。メトロノーム（♪）は下ろし始めが低い音・上げ始めが高い音。♪をタップすると確認音が鳴ります。音が出ないときは本体の音量を上げてください。記録はこの端末に自動保存され、ページを閉じても残ります（1セット目は前回比も表示）。「コピー」はその日の記録をプログラムの記録形式でクリップボードへ、「CSV」は全履歴を表計算ソフト向けに書き出します。
   </div>
 </div>
 
@@ -346,10 +347,20 @@
     { name: "股関節回し 各10回", sec: 40 },
   ];
   const WARMUP_TOTAL = WARMUP_STEPS.reduce((a, s) => a + s.sec, 0);
-  // 月〜水は月メニュー、木〜日は木メニュー
+  // 初期選択は「前回やった方の逆」。記録がなければ曜日から
+  // （週の前半＝肩の日／後半＝腕の日）。曜日がずれても破綻しない。
   function autoDay() {
+    const last = lastSessionDay();
+    if (last) return last.date === todayKey() ? last.day : (last.day === "mon" ? "thu" : "mon");
     const d = new Date().getDay(); // Sun=0 ... Sat=6
     return (d >= 1 && d <= 3) ? "mon" : "thu";
+  }
+  function lastSessionDay() {
+    const log = loadLog();
+    const days = Object.keys(log).filter(d => (log[d].sets || []).length > 0).sort();
+    if (days.length === 0) return null;
+    const date = days[days.length - 1];
+    return { date, day: log[date].day };
   }
 
   // 週はlocalStorageに保存し、実際の週の経過に合わせて自動で進める
@@ -683,7 +694,7 @@
           || (a.side || "").localeCompare(c.side || ""));
       sorted.forEach(s => {
         rows.push([
-          date, e.week, e.day === "mon" ? "月" : "木", s.ex, s.slot, s.no,
+          date, e.week, e.day === "mon" ? "肩" : "腕", s.ex, s.slot, s.no,
           s.side ? SIDE_JA[s.side] : "", s.sec,
           Math.floor(s.sec / 4), // 記録時のテンポに関わらず1回=4秒で概算
           b.w ?? "", b.f ?? "", b.m ?? "",
