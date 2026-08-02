@@ -163,7 +163,7 @@
   </div>
 
   <div class="hint">
-    1セット目はストップウォッチ。止めた秒数の8割が、2セット目以降のカウントダウンに自動セットされます。メトロノーム（♪）はテンポに合わせて鳴り、下ろし始めは低い音・上げ始めは高い音です。
+    1セット目はストップウォッチ。止めた秒数の8割が、2セット目以降のカウントダウンに自動セットされます。メトロノーム（♪）はテンポに合わせて鳴り、下ろし始めは低い音・上げ始めは高い音です。♪をタップすると確認音が鳴ります。音が出ないときは、本体の音量を上げてください（iPhoneの消音スイッチには対応済みですが、機種により解除が必要な場合があります）。
   </div>
 </div>
 
@@ -202,12 +202,36 @@
   const tempoSeg = $("tempoSeg");
 
   // ---- audio ----
+  // iOS Safariでは、(1) AudioContextはユーザー操作内で生成・resumeが必要、
+  // (2) 消音スイッチ(マナーモード)がオンだとWeb Audioはミュートされる。
+  // (2)への対策として、Audio Session APIでセッションを"playback"(メディア再生)扱いに
+  // し、さらに無音の<audio>ループを再生してメディア再生セッションを維持する。
   let audioCtx = null;
+  let silentEl = null;
+  const SILENT_WAV = "data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA";
   function ensureAudio() {
+    try {
+      if ("audioSession" in navigator) navigator.audioSession.type = "playback";
+    } catch (e) { /* 未対応ブラウザは無視 */ }
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
     if (audioCtx.state === "suspended") audioCtx.resume();
+    if (!silentEl) {
+      silentEl = new Audio(SILENT_WAV);
+      silentEl.loop = true;
+      silentEl.setAttribute("playsinline", "");
+    }
+    silentEl.play().catch(() => {});
+    // ユーザー操作内で無音バッファを一度鳴らして出力をアンロック
+    const buf = audioCtx.createBuffer(1, 1, 22050);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.connect(audioCtx.destination);
+    src.start(0);
+  }
+  function stopSilentLoop() {
+    if (silentEl) silentEl.pause();
   }
   function beep(freq, dur, gainVal) {
     if (!audioCtx) return;
@@ -353,6 +377,7 @@
     state.running = false;
     if (state.rafId) cancelAnimationFrame(state.rafId);
     releaseWakeLock();
+    stopSilentLoop();
 
     const seconds = Math.round(state.elapsed);
     if (state.mode === "up") {
@@ -380,6 +405,8 @@
     if (state.rafId) cancelAnimationFrame(state.rafId);
     releaseWakeLock();
     alarm();
+    // アラームが鳴り終わるまで無音ループを維持
+    setTimeout(stopSilentLoop, 1500);
 
     state.sets.push({ no: state.setNo, seconds: state.targetSeconds });
     timeDisp.textContent = "0";
@@ -398,6 +425,7 @@
       state.running = false;
       if (state.rafId) cancelAnimationFrame(state.rafId);
       releaseWakeLock();
+      stopSilentLoop();
     }
     state.setNo = 1;
     state.baseSeconds = null;
@@ -418,7 +446,12 @@
   metroToggle.addEventListener("click", () => {
     state.metronome = !state.metronome;
     metroToggle.classList.toggle("on", state.metronome);
-    if (state.metronome) ensureAudio();
+    if (state.metronome) {
+      // テスト音を1回鳴らして、音が出る状態かその場で確認できるようにする
+      ensureAudio();
+      beepUp();
+      if (!state.running) setTimeout(stopSilentLoop, 500);
+    }
   });
 
   tempoSeg.addEventListener("click", e => {
