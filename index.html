@@ -53,10 +53,10 @@
     border-radius: var(--radius);
     padding: 14px;
   }
+  .settings { display: flex; flex-direction: column; gap: 8px; }
 
-  /* ---- tempo ---- */
   .row { display: flex; gap: 8px; align-items: center; }
-  .row .label { font-size: 12px; color: var(--text-dim); flex: 0 0 auto; margin-right: 4px; }
+  .row .label { font-size: 12px; color: var(--text-dim); flex: 0 0 3.5em; }
   .seg { display: flex; flex: 1; background: var(--surface-2); border-radius: 10px; padding: 3px; }
   .seg button {
     flex: 1; border: 0; background: transparent; color: var(--text-dim);
@@ -71,13 +71,25 @@
   }
   .toggle.on { background: var(--ember-dim); color: var(--text); }
 
+  /* ---- exercise list ---- */
+  .ex-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    border: 0; border-radius: 10px; padding: 9px 12px;
+    background: var(--surface-2); color: var(--text-dim);
+    font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .chip.on { background: var(--ember-dim); color: var(--text); }
+  .chip .done { color: var(--green); font-size: 12px; }
+  .chip .cnt { font-size: 11px; opacity: .8; }
+
   /* ---- main display ---- */
   .display {
     display: flex; flex-direction: column; align-items: center;
-    justify-content: center; gap: 6px; padding: 26px 14px;
+    justify-content: center; gap: 6px; padding: 24px 14px;
     position: relative; overflow: hidden;
   }
-  .set-label { font-size: 14px; color: var(--text-dim); letter-spacing: .1em; }
+  .set-label { font-size: 14px; color: var(--text-dim); letter-spacing: .06em; text-align: center; }
   .set-label b { color: var(--ember); font-size: 16px; }
   .time {
     font-size: 84px; font-weight: 200; line-height: 1;
@@ -86,7 +98,8 @@
   }
   .time.count-down { color: var(--ember); }
   .time.done { color: var(--green); }
-  .sub { font-size: 14px; color: var(--text-dim); min-height: 20px; }
+  .time.prep { color: var(--text-dim); }
+  .sub { font-size: 14px; color: var(--text-dim); min-height: 20px; text-align: center; }
   .sub b { color: var(--text); }
   .beat {
     position: absolute; inset: 0; pointer-events: none;
@@ -135,27 +148,49 @@
     <div class="tagline">強火にしない。</div>
   </header>
 
-  <div class="card row">
-    <span class="label">テンポ</span>
-    <div class="seg" id="tempoSeg">
-      <button data-down="2" class="on">2秒↓ 2秒↑</button>
-      <button data-down="4">4秒↓ 2秒↑</button>
+  <div class="card settings">
+    <div class="row">
+      <span class="label">メニュー</span>
+      <div class="seg" id="daySeg">
+        <button data-day="mon">月（肩）</button>
+        <button data-day="thu">木（腕）</button>
+      </div>
+      <button class="toggle on" id="metroToggle">♪</button>
     </div>
-    <button class="toggle on" id="metroToggle">♪</button>
+    <div class="row">
+      <span class="label">テンポ</span>
+      <div class="seg" id="tempoSeg">
+        <button data-down="2" class="on">2秒↓ 2秒↑</button>
+        <button data-down="4">4秒↓ 2秒↑</button>
+      </div>
+    </div>
+    <div class="row">
+      <span class="label">準備</span>
+      <div class="seg" id="prepSeg">
+        <button data-prep="0">なし</button>
+        <button data-prep="3" class="on">3秒</button>
+        <button data-prep="5">5秒</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ex-list" id="exList"></div>
   </div>
 
   <div class="card display">
     <div class="beat" id="beatFlash"></div>
-    <div class="set-label" id="setLabel">セット <b>1</b> ─ 全力。崩れる直前まで</div>
+    <div class="set-label" id="setLabel"></div>
     <div class="time" id="timeDisp">0</div>
     <div class="phase" id="phaseDisp"></div>
-    <div class="sub" id="subDisp">タップで開始、限界が来たらタップで終了</div>
+    <div class="sub" id="subDisp"></div>
   </div>
 
   <button class="main-btn" id="mainBtn">開始</button>
 
   <div class="sub-actions">
-    <button id="nextExerciseBtn">次の種目へ（リセット）</button>
+    <button id="resetExBtn">この種目をやり直す</button>
+    <button id="nextExerciseBtn">次の種目へ ▸</button>
   </div>
 
   <div class="card sets" id="setList">
@@ -163,7 +198,7 @@
   </div>
 
   <div class="hint">
-    1セット目はストップウォッチ。止めた秒数の8割が、2セット目以降のカウントダウンに自動セットされます。メトロノーム（♪）はテンポに合わせて鳴り、下ろし始めは低い音・上げ始めは高い音です。♪をタップすると確認音が鳴ります。音が出ないときは、本体の音量を上げてください（iPhoneの消音スイッチには対応済みですが、機種により解除が必要な場合があります）。
+    メニューは曜日から自動選択されます（月〜水＝月メニュー、木〜日＝木メニュー）。各種目、1セット目はストップウォッチで限界の直前まで。止めた秒数の8割が2セット目以降のカウントダウンに自動セットされます。メトロノーム（♪）は下ろし始めが低い音・上げ始めが高い音。♪をタップすると確認音が鳴ります。音が出ないときは本体の音量を上げてください。
   </div>
 </div>
 
@@ -171,23 +206,55 @@
 (() => {
   "use strict";
 
+  // ---- menu data（トロビ 12週プログラム v0.2 の1回の構成）----
+  const COMMON_EX = [
+    { name: "腕立て伏せ", note: "押す" },
+    { name: "テーブルロー", note: "引く" },
+    { name: "スクワット系", note: "しゃがむ・左右" },
+    { name: "RDL系", note: "股関節・左右" },
+  ];
+  const DAY_EX = {
+    mon: [
+      { name: "サイドレイズ", note: "肩" },
+      { name: "リアレイズ", note: "背中上部" },
+    ],
+    thu: [
+      { name: "カール", note: "腕・前" },
+      { name: "キックバック", note: "腕・裏" },
+    ],
+  };
+  // 月〜水は月メニュー、木〜日は木メニュー
+  function autoDay() {
+    const d = new Date().getDay(); // Sun=0 ... Sat=6
+    return (d >= 1 && d <= 3) ? "mon" : "thu";
+  }
+
   // ---- state ----
   const state = {
+    day: autoDay(),
+    exercises: [],       // [{name, note, sets:[], baseSeconds, targetSeconds, setNo}]
+    exIndex: 0,
     running: false,
-    mode: "up",          // "up" = stopwatch (set 1), "down" = countdown (set 2+)
-    setNo: 1,
-    baseSeconds: null,   // set 1 result
-    targetSeconds: null, // 80% of base
+    mode: "up",          // "prep" | "up"(set1 stopwatch) | "down"(set2+ countdown)
+    prep: 3,             // 準備インターバル秒数
+    lastPrepSec: -1,
     startTime: 0,
     elapsed: 0,
-    sets: [],            // {no, seconds}
-    tempoDown: 2,        // seconds for lowering
-    tempoUp: 2,          // seconds for raising
+    tempoDown: 2,
+    tempoUp: 2,
     metronome: true,
     rafId: null,
     lastBeatIndex: -1,
     wakeLock: null,
   };
+
+  function buildExercises() {
+    state.exercises = [...COMMON_EX, ...DAY_EX[state.day]].map(e => ({
+      ...e, sets: [], baseSeconds: null, targetSeconds: null, setNo: 1,
+    }));
+    state.exIndex = 0;
+  }
+  const cur = () => state.exercises[state.exIndex];
 
   // ---- elements ----
   const $ = id => document.getElementById(id);
@@ -200,6 +267,9 @@
   const beatFlash = $("beatFlash");
   const metroToggle = $("metroToggle");
   const tempoSeg = $("tempoSeg");
+  const daySeg = $("daySeg");
+  const prepSeg = $("prepSeg");
+  const exList = $("exList");
 
   // ---- audio ----
   // iOS Safariでは、(1) AudioContextはユーザー操作内で生成・resumeが必要、
@@ -247,8 +317,9 @@
     osc.start(t);
     osc.stop(t + dur + 0.02);
   }
-  const beepDown = () => beep(440, 0.12, 0.5);   // start of lowering: low
-  const beepUp   = () => beep(880, 0.12, 0.5);   // start of raising: high
+  const beepDown = () => beep(440, 0.12, 0.5);   // 下ろし始め: 低い音
+  const beepUp   = () => beep(880, 0.12, 0.5);   // 上げ始め: 高い音
+  const beepPrep = () => beep(660, 0.1, 0.4);    // 準備カウント
   function alarm() {
     if (!audioCtx) return;
     [0, 0.18, 0.36, 0.54].forEach((d, i) => {
@@ -257,7 +328,7 @@
     if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
   }
 
-  // ---- wake lock (keep screen on while running) ----
+  // ---- wake lock ----
   async function acquireWakeLock() {
     try {
       if ("wakeLock" in navigator) {
@@ -275,17 +346,23 @@
   // ---- helpers ----
   const repSeconds = () => state.tempoDown + state.tempoUp;
   const toReps = sec => Math.floor(sec / repSeconds());
+  const fmt = sec => String(Math.max(0, Math.ceil(sec)));
 
-  function fmt(sec) {
-    return String(Math.max(0, Math.ceil(sec)));
+  // ---- rendering ----
+  function renderExList() {
+    exList.innerHTML = state.exercises.map((e, i) => {
+      const done = e.sets.length > 0 ? `<span class="done">✓</span><span class="cnt">${e.sets.length}</span>` : "";
+      return `<button class="chip${i === state.exIndex ? " on" : ""}" data-i="${i}">${e.name}${done}</button>`;
+    }).join("");
   }
 
   function renderSets() {
-    if (state.sets.length === 0) {
-      setList.innerHTML = '<div class="empty">まだ記録がありません</div>';
+    const ex = cur();
+    if (ex.sets.length === 0) {
+      setList.innerHTML = `<div class="empty">${ex.name}：まだ記録がありません</div>`;
       return;
     }
-    setList.innerHTML = state.sets.map(s => {
+    setList.innerHTML = ex.sets.map(s => {
       const mark = s.no === 1 ? "（基準値）" : "";
       return `<div class="set-row">
         <span class="n">セット${s.no}</span>
@@ -296,21 +373,24 @@
   }
 
   function updateIdleUI() {
-    if (state.setNo === 1) {
-      setLabel.innerHTML = 'セット <b>1</b> ─ 全力。崩れる直前まで';
+    const ex = cur();
+    if (ex.setNo === 1) {
+      setLabel.innerHTML = `<b>${ex.name}</b>（${ex.note}）─ セット1・全力`;
       subDisp.textContent = "タップで開始、限界が来たらタップで終了";
       timeDisp.textContent = "0";
       timeDisp.className = "time";
       mainBtn.textContent = "開始";
     } else {
-      setLabel.innerHTML = `セット <b>${state.setNo}</b> ─ 8割で止める`;
-      subDisp.innerHTML = `1セット目 <b>${state.baseSeconds}秒</b> → 目標 <b>${state.targetSeconds}秒</b>（約${toReps(state.targetSeconds)}回）`;
-      timeDisp.textContent = fmt(state.targetSeconds);
+      setLabel.innerHTML = `<b>${ex.name}</b>（${ex.note}）─ セット${ex.setNo}・8割で止める`;
+      subDisp.innerHTML = `1セット目 <b>${ex.baseSeconds}秒</b> → 目標 <b>${ex.targetSeconds}秒</b>（約${toReps(ex.targetSeconds)}回）`;
+      timeDisp.textContent = fmt(ex.targetSeconds);
       timeDisp.className = "time count-down";
-      mainBtn.textContent = `セット${state.setNo} 開始`;
+      mainBtn.textContent = `セット${ex.setNo} 開始`;
     }
     phaseDisp.textContent = "";
     mainBtn.classList.remove("running");
+    renderExList();
+    renderSets();
   }
 
   // ---- metronome / phase within a rep ----
@@ -320,7 +400,6 @@
     const phase = inRep < state.tempoDown ? "down" : "up";
     phaseDisp.textContent = phase === "down" ? "↓ 下ろす" : "↑ 上げる";
 
-    // beat index: one at each phase boundary
     const repIndex = Math.floor(elapsed / rep);
     const beatIndex = repIndex * 2 + (phase === "up" ? 1 : 0);
     if (beatIndex !== state.lastBeatIndex) {
@@ -340,18 +419,32 @@
     const elapsed = (now - state.startTime) / 1000;
     state.elapsed = elapsed;
 
-    if (state.mode === "up") {
+    if (state.mode === "prep") {
+      const remain = state.prep - elapsed;
+      if (remain <= 0) {
+        startWork();
+      } else {
+        const shown = Math.ceil(remain);
+        timeDisp.textContent = String(shown);
+        if (shown !== state.lastPrepSec) {
+          state.lastPrepSec = shown;
+          if (state.metronome) beepPrep();
+          beatFlash.classList.add("flash");
+          setTimeout(() => beatFlash.classList.remove("flash"), 100);
+        }
+      }
+    } else if (state.mode === "up") {
       timeDisp.textContent = fmt(Math.floor(elapsed));
       subDisp.innerHTML = `約 <b>${toReps(elapsed)}</b> 回`;
       handleBeats(elapsed);
     } else {
-      const remain = state.targetSeconds - elapsed;
+      const remain = cur().targetSeconds - elapsed;
       if (remain <= 0) {
         finishCountdown();
         return;
       }
       timeDisp.textContent = fmt(remain);
-      subDisp.innerHTML = `目標 <b>${state.targetSeconds}秒</b>（約${toReps(state.targetSeconds)}回）`;
+      subDisp.innerHTML = `目標 <b>${cur().targetSeconds}秒</b>（約${toReps(cur().targetSeconds)}回）`;
       handleBeats(elapsed);
     }
     state.rafId = requestAnimationFrame(tick);
@@ -362,15 +455,41 @@
     ensureAudio();
     acquireWakeLock();
     state.running = true;
-    state.mode = state.setNo === 1 ? "up" : "down";
+    state.lastBeatIndex = -1;
+    if (state.prep > 0) {
+      state.mode = "prep";
+      state.startTime = performance.now();
+      state.lastPrepSec = -1;
+      timeDisp.className = "time prep";
+      timeDisp.textContent = String(state.prep);
+      phaseDisp.textContent = "構えて";
+      subDisp.textContent = "";
+      mainBtn.textContent = "キャンセル";
+      mainBtn.classList.add("running");
+    } else {
+      startWork();
+      mainBtn.classList.add("running");
+    }
+    state.rafId = requestAnimationFrame(tick);
+  }
+
+  function startWork() {
+    const ex = cur();
+    state.mode = ex.setNo === 1 ? "up" : "down";
     state.startTime = performance.now();
     state.lastBeatIndex = -1;
-    mainBtn.textContent = "終了";
-    mainBtn.classList.add("running");
-    setLabel.innerHTML = `セット <b>${state.setNo}</b>`;
     timeDisp.className = state.mode === "down" ? "time count-down" : "time";
+    setLabel.innerHTML = `<b>${ex.name}</b> ─ セット${ex.setNo}`;
+    mainBtn.textContent = "終了";
     if (state.metronome) beepDown();
-    state.rafId = requestAnimationFrame(tick);
+  }
+
+  function cancelPrep() {
+    state.running = false;
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    releaseWakeLock();
+    stopSilentLoop();
+    updateIdleUI();
   }
 
   function stop() {
@@ -379,25 +498,27 @@
     releaseWakeLock();
     stopSilentLoop();
 
+    const ex = cur();
     const seconds = Math.round(state.elapsed);
     if (state.mode === "up") {
-      // set 1 finished -> becomes the baseline
-      state.baseSeconds = seconds;
-      state.targetSeconds = Math.max(1, Math.round(seconds * 0.8));
-      state.sets.push({ no: state.setNo, seconds });
+      // 1セット目終了 → この種目の基準値になる
+      ex.baseSeconds = seconds;
+      ex.targetSeconds = Math.max(1, Math.round(seconds * 0.8));
+      ex.sets.push({ no: ex.setNo, seconds });
       timeDisp.className = "time done";
-      subDisp.innerHTML = `記録 <b>${seconds}秒</b> ＝ 約${toReps(seconds)}回。次からは <b>${state.targetSeconds}秒</b> で止めます`;
+      subDisp.innerHTML = `記録 <b>${seconds}秒</b> ＝ 約${toReps(seconds)}回。次からは <b>${ex.targetSeconds}秒</b> で止めます`;
     } else {
-      // stopped a countdown early: record actual seconds done
-      state.sets.push({ no: state.setNo, seconds });
-      subDisp.innerHTML = `セット${state.setNo}：${seconds}秒で終了`;
+      // カウントダウンを途中で止めた: 実際にやった秒数を記録
+      ex.sets.push({ no: ex.setNo, seconds });
+      subDisp.innerHTML = `セット${ex.setNo}：${seconds}秒で終了`;
     }
-    state.setNo += 1;
-    renderSets();
+    ex.setNo += 1;
     phaseDisp.textContent = "";
-    mainBtn.textContent = `セット${state.setNo} 開始`;
+    setLabel.innerHTML = `<b>${ex.name}</b> ─ セット${ex.setNo}・8割で止める`;
+    mainBtn.textContent = `セット${ex.setNo} 開始`;
     mainBtn.classList.remove("running");
-    setLabel.innerHTML = `セット <b>${state.setNo}</b> ─ 8割で止める`;
+    renderExList();
+    renderSets();
   }
 
   function finishCountdown() {
@@ -408,40 +529,89 @@
     // アラームが鳴り終わるまで無音ループを維持
     setTimeout(stopSilentLoop, 1500);
 
-    state.sets.push({ no: state.setNo, seconds: state.targetSeconds });
+    const ex = cur();
+    ex.sets.push({ no: ex.setNo, seconds: ex.targetSeconds });
     timeDisp.textContent = "0";
     timeDisp.className = "time done";
     phaseDisp.textContent = "";
-    subDisp.innerHTML = `セット${state.setNo} 完了 ─ <b>${state.targetSeconds}秒</b>。ここで止めるのが正解`;
-    state.setNo += 1;
-    renderSets();
-    mainBtn.textContent = `セット${state.setNo} 開始`;
+    subDisp.innerHTML = `セット${ex.setNo} 完了 ─ <b>${ex.targetSeconds}秒</b>。ここで止めるのが正解`;
+    ex.setNo += 1;
+    setLabel.innerHTML = `<b>${ex.name}</b> ─ セット${ex.setNo}・8割で止める`;
+    mainBtn.textContent = `セット${ex.setNo} 開始`;
     mainBtn.classList.remove("running");
-    setLabel.innerHTML = `セット <b>${state.setNo}</b> ─ 8割で止める`;
+    renderExList();
+    renderSets();
   }
 
-  function resetExercise() {
+  function stopIfRunning() {
     if (state.running) {
       state.running = false;
       if (state.rafId) cancelAnimationFrame(state.rafId);
       releaseWakeLock();
       stopSilentLoop();
     }
-    state.setNo = 1;
-    state.baseSeconds = null;
-    state.targetSeconds = null;
-    state.elapsed = 0;
-    state.sets = [];
-    renderSets();
+  }
+
+  function resetCurrentExercise() {
+    stopIfRunning();
+    const ex = cur();
+    ex.sets = [];
+    ex.baseSeconds = null;
+    ex.targetSeconds = null;
+    ex.setNo = 1;
     updateIdleUI();
+  }
+
+  function gotoExercise(i) {
+    stopIfRunning();
+    state.exIndex = i;
+    updateIdleUI();
+  }
+
+  function nextExercise() {
+    if (state.exIndex < state.exercises.length - 1) {
+      gotoExercise(state.exIndex + 1);
+    } else {
+      stopIfRunning();
+      updateIdleUI();
+      subDisp.innerHTML = "今日のメニューはここまで。<b>おつかれさまでした 🔥</b>";
+    }
   }
 
   // ---- events ----
   mainBtn.addEventListener("click", () => {
-    state.running ? stop() : start();
+    if (state.running) {
+      state.mode === "prep" ? cancelPrep() : stop();
+    } else {
+      start();
+    }
   });
 
-  $("nextExerciseBtn").addEventListener("click", resetExercise);
+  $("nextExerciseBtn").addEventListener("click", nextExercise);
+  $("resetExBtn").addEventListener("click", resetCurrentExercise);
+
+  exList.addEventListener("click", e => {
+    const btn = e.target.closest(".chip");
+    if (!btn) return;
+    gotoExercise(Number(btn.dataset.i));
+  });
+
+  daySeg.addEventListener("click", e => {
+    const btn = e.target.closest("button");
+    if (!btn || btn.dataset.day === state.day) return;
+    stopIfRunning();
+    state.day = btn.dataset.day;
+    daySeg.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.day === state.day));
+    buildExercises();
+    updateIdleUI();
+  });
+
+  prepSeg.addEventListener("click", e => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    state.prep = Number(btn.dataset.prep);
+    prepSeg.querySelectorAll("button").forEach(b => b.classList.toggle("on", b === btn));
+  });
 
   metroToggle.addEventListener("click", () => {
     state.metronome = !state.metronome;
@@ -460,10 +630,12 @@
     tempoSeg.querySelectorAll("button").forEach(b => b.classList.remove("on"));
     btn.classList.add("on");
     state.tempoDown = Number(btn.dataset.down);
-    renderSets();
-    if (!state.running) updateIdleUI();
+    updateIdleUI();
   });
 
+  // ---- init ----
+  daySeg.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.day === state.day));
+  buildExercises();
   updateIdleUI();
 })();
 </script>
