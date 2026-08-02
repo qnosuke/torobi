@@ -271,7 +271,7 @@
   </div>
 
   <div class="hint">
-    種目は「週」に合わせてプログラムの段階から自動で選ばれます（週は一度合わせれば毎週自動で進みます）。第7週以降は単関節種目のテンポが自動で4秒↓2秒↑になります。メニューは曜日から自動選択（月〜水＝月、木〜日＝木）。ウォームアップは3分・4ステップを音で切り替えながらガイドします。各種目、1セット目はストップウォッチで限界の直前まで。止めた秒数の8割が2セット目以降のカウントダウンに自動セットされます。メトロノーム（♪）は下ろし始めが低い音・上げ始めが高い音。♪をタップすると確認音が鳴ります。音が出ないときは本体の音量を上げてください。記録はこの端末に自動保存され、ページを閉じても残ります（1セット目は前回比も表示）。「コピー」はその日の記録をプログラムの記録形式でクリップボードへ、「CSV」は全履歴を表計算ソフト向けに書き出します。
+    種目は「週」に合わせてプログラムの段階から自動で選ばれます（週は一度合わせれば毎週自動で進みます）。第7週以降は単関節種目のテンポが自動で4秒↓2秒↑になります。メニューは曜日から自動選択（月〜水＝月、木〜日＝木）。ウォームアップは3分・4ステップを音で切り替えながらガイドします。各種目、1セット目はストップウォッチで限界の直前まで。止めた秒数の8割が2セット目以降のカウントダウンに自動セットされます。片側種目（ワンハンドロー・スプリット系・片脚RDL）は左→右で1セット。左右で限界が違うため、基準値と8割の目標もそれぞれ別に計算されます。メトロノーム（♪）は下ろし始めが低い音・上げ始めが高い音。♪をタップすると確認音が鳴ります。音が出ないときは本体の音量を上げてください。記録はこの端末に自動保存され、ページを閉じても残ります（1セット目は前回比も表示）。「コピー」はその日の記録をプログラムの記録形式でクリップボードへ、「CSV」は全履歴を表計算ソフト向けに書き出します。
   </div>
 </div>
 
@@ -300,7 +300,7 @@
         howto: "足を椅子に乗せて行う。頭から踵まで一直線、胸は拳ひとつ分まで、肘は体から45度。腰を落とさない。" },
     ]},
     { slot: "引く", byPhase: [
-      { name: "ワンハンドロー", weight: "2.3kg",
+      { name: "ワンハンドロー", weight: "2.3kg", uni: true,
         howto: "片手と片膝を椅子や台に置き、背中を真っ直ぐ。ダンベルを脇腹に向かって引き上げ、ゆっくり下ろす。左右それぞれ計測。" },
       { name: "テーブルロー", weight: "自重",
         howto: "丈夫な机の下に仰向けで潜り、縁を掴んで胸を天板に引き寄せる。体は一直線。膝を曲げると易しくなる。※机が動かない・体重に耐えることを必ず確認。不安ならワンハンドロー（5.4kg）を継続。" },
@@ -308,11 +308,11 @@
         howto: "テーブルローの足を伸ばし、体を水平に近づけて行う。体は一直線のまま胸を天板へ。※机の安定を必ず確認。" },
     ]},
     { slot: "しゃがむ", byPhase: [
-      { name: "自重スプリットスクワット", weight: "自重・左右",
+      { name: "自重スプリットスクワット", weight: "自重", uni: true,
         howto: "足を前後に開き、後ろ膝を床に向けて真下に下ろす。上体は真っ直ぐ、前膝はつま先より前に出さない。左右それぞれ計測。" },
-      { name: "スプリットスクワット", weight: "5.4kg×2・左右",
+      { name: "スプリットスクワット", weight: "5.4kg×2", uni: true,
         howto: "両手にダンベルを持ち体側に垂らす。後ろ膝を床に向けて真下に下ろし、上体は真っ直ぐ。前膝はつま先より前に出さない。左右それぞれ計測。" },
-      { name: "ブルガリアンスクワット", weight: "5.4kg×2・左右",
+      { name: "ブルガリアンスクワット", weight: "5.4kg×2", uni: true,
         howto: "後ろ足の甲を椅子に乗せ、両手にダンベル。後ろ膝を真下に下ろす。上体は真っ直ぐ、前膝はつま先より前に出さない。左右それぞれ計測。" },
     ]},
     { slot: "股関節", byPhase: [
@@ -320,7 +320,7 @@
         howto: "仰向けで膝を立て、かかとで床を押してお尻を持ち上げる。肩から膝まで一直線になったらお尻を締め、ゆっくり下ろす。" },
       { name: "ルーマニアンデッドリフト", weight: "5.4kg×2",
         howto: "膝を軽く曲げたまま固定し、股関節から折る。ダンベルを脚に沿わせて膝下まで。太もも裏が伸びたら戻る。背中が丸まったら即中止。" },
-      { name: "片脚ルーマニアンデッドリフト", weight: "5.4kg×1〜2・左右",
+      { name: "片脚ルーマニアンデッドリフト", weight: "5.4kg×1〜2", uni: true,
         howto: "片脚で立ち、膝を軽く曲げたまま股関節から折る。ダンベルを脚に沿わせて下ろし、背中は最後まで真っ直ぐ。丸まったら即中止。左右それぞれ計測。" },
     ]},
   ];
@@ -401,12 +401,13 @@
     log[k].day = state.day;
     return log[k];
   }
-  // 同じ種目・同じセット番号は上書き（やり直しに対応）
-  function recordSet(exName, slot, no, sec) {
+  // 同じ種目・同じセット番号・同じ側は上書き（やり直しに対応）
+  // side は片側種目のみ "L"|"R"、両側種目は null
+  function recordSet(exName, slot, no, sec, side = null) {
     const log = loadLog();
     const e = todayEntry(log);
-    const i = e.sets.findIndex(s => s.ex === exName && s.no === no);
-    const row = { ex: exName, slot, no, sec };
+    const i = e.sets.findIndex(s => s.ex === exName && s.no === no && (s.side || null) === side);
+    const row = { ex: exName, slot, no, sec, ...(side ? { side } : {}) };
     i >= 0 ? e.sets[i] = row : e.sets.push(row);
     saveLog(log);
     renderLogCount();
@@ -425,13 +426,14 @@
     e.body = { w: num(bodyW), f: num(bodyF), m: num(bodyM) };
     saveLog(log);
   }
-  // 同じ種目の直近（今日より前）の1セット目の秒数
-  function lastTimeSeconds(exName) {
+  // 同じ種目・同じ側の直近（今日より前）の1セット目の秒数
+  function lastTimeSeconds(exName, side = null) {
     const log = loadLog();
     const k = todayKey();
     const days = Object.keys(log).filter(d => d < k).sort().reverse();
     for (const d of days) {
-      const hit = (log[d].sets || []).find(s => s.ex === exName && s.no === 1);
+      const hit = (log[d].sets || []).find(
+        s => s.ex === exName && s.no === 1 && (s.side || null) === side);
       if (hit) return { sec: hit.sec, date: d };
     }
     return null;
@@ -441,7 +443,7 @@
   const state = {
     week: loadWeek(),
     day: autoDay(),
-    exercises: [],       // [{name, note, sets:[], baseSeconds, targetSeconds, setNo}]
+    exercises: [],       // [{name, note, uni, sets:[], base:{L,R}, target:{L,R}, setNo, side}]
     exIndex: 0,
     running: false,
     mode: "up",          // "prep" | "up"(set1 stopwatch) | "down"(set2+ countdown)
@@ -464,13 +466,38 @@
     state.exercises = [
       { warmup: true, name: "ウォームアップ", note: "3分", done: false },
       ...[...main4, ...iso2].map(e => ({
-        ...e, note: `${e.slot}・${e.weight}`,
-        sets: [], baseSeconds: null, targetSeconds: null, setNo: 1,
+        ...e, note: `${e.slot}・${e.weight}${e.uni ? "・左右" : ""}`,
+        // 片側種目は左右で限界が違うため、基準値と目標を側ごとに持つ
+        sets: [], base: { L: null, R: null }, target: { L: null, R: null },
+        setNo: 1, side: e.uni ? "L" : null,
       })),
     ];
     restoreToday();
     state.exIndex = 0;
   }
+
+  const SIDE_JA = { L: "左", R: "右" };
+  // 片側種目は「左→右で1セット」。次にやるべき位置を記録から求める
+  function nextPos(ex) {
+    if (!ex.uni) {
+      const last = ex.sets.reduce((m, s) => Math.max(m, s.no), 0);
+      return { setNo: last + 1, side: null };
+    }
+    const has = (no, side) => ex.sets.some(s => s.no === no && s.side === side);
+    let no = 1;
+    while (has(no, "L") && has(no, "R")) no++;
+    return { setNo: no, side: has(no, "L") ? "R" : "L" };
+  }
+  // 両側種目は1セット=1記録、片側種目は左右そろって1セット
+  function doneSets(ex) {
+    if (!ex.uni) return ex.sets.length;
+    const nos = [...new Set(ex.sets.map(s => s.no))];
+    return nos.filter(n => ex.sets.some(s => s.no === n && s.side === "L")
+                        && ex.sets.some(s => s.no === n && s.side === "R")).length;
+  }
+  const curBase = ex => ex.uni ? ex.base[ex.side] : ex.base.L;
+  const curTarget = ex => ex.uni ? ex.target[ex.side] : ex.target.L;
+  const sideLabel = ex => ex.uni ? `・${SIDE_JA[ex.side]}` : "";
 
   // リロードしても、その日ここまでの記録を画面に復元する
   function restoreToday() {
@@ -480,13 +507,15 @@
       if (ex.warmup) return;
       const mine = (e.sets || []).filter(s => s.ex === ex.name).sort((a, b) => a.no - b.no);
       if (mine.length === 0) return;
-      ex.sets = mine.map(s => ({ no: s.no, seconds: s.sec }));
-      const first = mine.find(s => s.no === 1);
-      if (first) {
-        ex.baseSeconds = first.sec;
-        ex.targetSeconds = Math.max(1, Math.round(first.sec * 0.8));
-      }
-      ex.setNo = mine[mine.length - 1].no + 1;
+      ex.sets = mine.map(s => ({ no: s.no, seconds: s.sec, side: s.side || null }));
+      ["L", "R"].forEach(side => {
+        const first = mine.find(s => s.no === 1 && (s.side || "L") === side);
+        if (first) {
+          ex.base[side] = first.sec;
+          ex.target[side] = Math.max(1, Math.round(first.sec * 0.8));
+        }
+      });
+      Object.assign(ex, nextPos(ex));
     });
   }
   const cur = () => state.exercises[state.exIndex];
@@ -606,7 +635,25 @@
     const e = log[k];
     if (!e || (e.sets || []).length === 0) return null;
     const firsts = e.sets.filter(s => s.no === 1);
-    const line = names => names.map(s => `${s.ex} ${s.sec}`).join(" / ");
+    // 片側種目は「ブルガリアン 左44 右41」の形にまとめる
+    const line = rows => {
+      const order = [];
+      const byEx = {};
+      rows.forEach(s => {
+        if (!order.includes(s.ex)) { order.push(s.ex); byEx[s.ex] = []; }
+        byEx[s.ex].push(s);
+      });
+      return order.map(name => {
+        const rs = byEx[name];
+        const val = rs[0].side
+          ? ["L", "R"].map(sd => {
+              const hit = rs.find(r => r.side === sd);
+              return hit ? `${SIDE_JA[sd]}${hit.sec}` : null;
+            }).filter(Boolean).join(" ")
+          : String(rs[0].sec);
+        return `${name} ${val}`;
+      }).join(" / ");
+    };
     const main = firsts.filter(s => s.slot !== "単関節");
     const iso = firsts.filter(s => s.slot === "単関節");
     const lines = [`${k}（${WDAY[new Date(k + "T00:00:00").getDay()]}）`];
@@ -624,7 +671,7 @@
 
   function buildCsv() {
     const log = loadLog();
-    const rows = [["日付", "週", "メニュー", "種目", "枠", "セット", "秒数", "回数換算", "体重", "体脂肪率", "骨格筋率"]];
+    const rows = [["日付", "週", "メニュー", "種目", "枠", "セット", "左右", "秒数", "回数換算", "体重", "体脂肪率", "骨格筋率"]];
     Object.keys(log).sort().forEach(date => {
       const e = log[date];
       const b = e.body || {};
@@ -632,10 +679,12 @@
       const order = [];
       (e.sets || []).forEach(s => { if (!order.includes(s.ex)) order.push(s.ex); });
       const sorted = (e.sets || []).slice().sort(
-        (a, c) => order.indexOf(a.ex) - order.indexOf(c.ex) || a.no - c.no);
+        (a, c) => order.indexOf(a.ex) - order.indexOf(c.ex) || a.no - c.no
+          || (a.side || "").localeCompare(c.side || ""));
       sorted.forEach(s => {
         rows.push([
-          date, e.week, e.day === "mon" ? "月" : "木", s.ex, s.slot, s.no, s.sec,
+          date, e.week, e.day === "mon" ? "月" : "木", s.ex, s.slot, s.no,
+          s.side ? SIDE_JA[s.side] : "", s.sec,
           Math.floor(s.sec / 4), // 記録時のテンポに関わらず1回=4秒で概算
           b.w ?? "", b.f ?? "", b.m ?? "",
         ]);
@@ -729,7 +778,7 @@
     exList.innerHTML = state.exercises.map((e, i) => {
       const done = e.warmup
         ? (e.done ? `<span class="done">✓</span>` : "")
-        : (e.sets.length > 0 ? `<span class="done">✓</span><span class="cnt">${e.sets.length}</span>` : "");
+        : (doneSets(e) > 0 ? `<span class="done">✓</span><span class="cnt">${doneSets(e)}</span>` : "");
       return `<button class="chip${i === state.exIndex ? " on" : ""}" data-i="${i}">${e.name}${done}</button>`;
     }).join("");
   }
@@ -750,8 +799,9 @@
     }
     setList.innerHTML = ex.sets.map(s => {
       const mark = s.no === 1 ? "（基準値）" : "";
+      const label = s.side ? `セット${s.no} ${SIDE_JA[s.side]}` : `セット${s.no}`;
       return `<div class="set-row">
-        <span class="n">セット${s.no}</span>
+        <span class="n">${label}</span>
         <span class="s">${s.seconds}秒</span>
         <span class="r">約${toReps(s.seconds)}回 ${mark}</span>
       </div>`;
@@ -773,21 +823,23 @@
       renderHowto();
       return;
     }
+    const s = sideLabel(ex);
+    const btnSide = ex.uni ? `（${SIDE_JA[ex.side]}）` : "";
     if (ex.setNo === 1) {
-      setLabel.innerHTML = `<b>${ex.name}</b>（${ex.note}）─ セット1・全力`;
-      const prev = lastTimeSeconds(ex.name);
+      setLabel.innerHTML = `<b>${ex.name}</b>（${ex.note}）─ セット1${s}・全力`;
+      const prev = lastTimeSeconds(ex.name, ex.side);
       subDisp.innerHTML = prev
-        ? `前回 <b>${prev.sec}秒</b>（${prev.date.slice(5)}）。上回るのが目標`
-        : "タップで開始、限界が来たらタップで終了";
+        ? `前回${s.slice(1)} <b>${prev.sec}秒</b>（${prev.date.slice(5)}）。上回るのが目標`
+        : (ex.uni ? "左右それぞれ限界まで。両方で1セットです" : "タップで開始、限界が来たらタップで終了");
       timeDisp.textContent = "0";
       timeDisp.className = "time";
-      mainBtn.textContent = "開始";
+      mainBtn.textContent = `開始${btnSide}`;
     } else {
-      setLabel.innerHTML = `<b>${ex.name}</b>（${ex.note}）─ セット${ex.setNo}・8割で止める`;
-      subDisp.innerHTML = `1セット目 <b>${ex.baseSeconds}秒</b> → 目標 <b>${ex.targetSeconds}秒</b>（約${toReps(ex.targetSeconds)}回）`;
-      timeDisp.textContent = fmt(ex.targetSeconds);
+      setLabel.innerHTML = `<b>${ex.name}</b>（${ex.note}）─ セット${ex.setNo}${s}・8割で止める`;
+      subDisp.innerHTML = `1セット目${s.slice(1)} <b>${curBase(ex)}秒</b> → 目標 <b>${curTarget(ex)}秒</b>（約${toReps(curTarget(ex))}回）`;
+      timeDisp.textContent = fmt(curTarget(ex));
       timeDisp.className = "time count-down";
-      mainBtn.textContent = `セット${ex.setNo} 開始`;
+      mainBtn.textContent = `セット${ex.setNo} 開始${btnSide}`;
     }
     phaseDisp.textContent = "";
     mainBtn.classList.remove("running");
@@ -865,13 +917,13 @@
       subDisp.innerHTML = `約 <b>${toReps(elapsed)}</b> 回`;
       handleBeats(elapsed);
     } else {
-      const remain = cur().targetSeconds - elapsed;
+      const remain = curTarget(cur()) - elapsed;
       if (remain <= 0) {
         finishCountdown();
         return;
       }
       timeDisp.textContent = fmt(remain);
-      subDisp.innerHTML = `目標 <b>${cur().targetSeconds}秒</b>（約${toReps(cur().targetSeconds)}回）`;
+      subDisp.innerHTML = `目標 <b>${curTarget(cur())}秒</b>（約${toReps(curTarget(cur()))}回）`;
       handleBeats(elapsed);
     }
     state.rafId = requestAnimationFrame(tick);
@@ -949,30 +1001,34 @@
 
     const ex = cur();
     const seconds = Math.round(state.elapsed);
+    const side = ex.side;
+    const sideJa = ex.uni ? SIDE_JA[side] : "";
+    let msg;
     if (state.mode === "up") {
-      // 1セット目終了 → この種目の基準値になる
-      ex.baseSeconds = seconds;
-      ex.targetSeconds = Math.max(1, Math.round(seconds * 0.8));
-      ex.sets.push({ no: ex.setNo, seconds });
-      timeDisp.className = "time done";
-      const prev = lastTimeSeconds(ex.name);
+      // 1セット目終了 → その側の基準値になる（片側種目は左右で別々）
+      const key = ex.uni ? side : "L";
+      ex.base[key] = seconds;
+      ex.target[key] = Math.max(1, Math.round(seconds * 0.8));
+      ex.sets.push({ no: ex.setNo, seconds, side });
+      const prev = lastTimeSeconds(ex.name, side);
       const diff = prev ? seconds - prev.sec : null;
       const cmp = diff == null ? ""
         : diff > 0 ? `前回より <b>+${diff}秒</b> 🔥 ` : diff < 0 ? `前回より ${diff}秒 ` : "前回と同じ ";
-      subDisp.innerHTML = `${cmp}記録 <b>${seconds}秒</b> ＝ 約${toReps(seconds)}回。次からは <b>${ex.targetSeconds}秒</b> で止めます`;
+      const what = sideJa ? `${sideJa}の記録` : "記録";
+      const next = sideJa ? `次の${sideJa}は` : "次からは";
+      msg = `${cmp}${what} <b>${seconds}秒</b> ＝ 約${toReps(seconds)}回。${next} <b>${ex.target[key]}秒</b> で止めます`;
     } else {
       // カウントダウンを途中で止めた: 実際にやった秒数を記録
-      ex.sets.push({ no: ex.setNo, seconds });
-      subDisp.innerHTML = `セット${ex.setNo}：${seconds}秒で終了`;
+      ex.sets.push({ no: ex.setNo, seconds, side });
+      msg = `セット${ex.setNo}${sideJa ? " " + sideJa : ""}：${seconds}秒で終了`;
     }
-    recordSet(ex.name, ex.slot, ex.setNo, seconds);
-    ex.setNo += 1;
+    recordSet(ex.name, ex.slot, ex.setNo, seconds, side);
+    Object.assign(ex, nextPos(ex));
     phaseDisp.textContent = "";
-    setLabel.innerHTML = `<b>${ex.name}</b> ─ セット${ex.setNo}・8割で止める`;
-    mainBtn.textContent = `セット${ex.setNo} 開始`;
-    mainBtn.classList.remove("running");
-    renderExList();
-    renderSets();
+    updateIdleUI();
+    timeDisp.textContent = String(seconds);
+    timeDisp.className = "time done";
+    subDisp.innerHTML = msg;
   }
 
   function finishCountdown() {
@@ -984,18 +1040,16 @@
     setTimeout(stopSilentLoop, 1500);
 
     const ex = cur();
-    ex.sets.push({ no: ex.setNo, seconds: ex.targetSeconds });
-    recordSet(ex.name, ex.slot, ex.setNo, ex.targetSeconds);
+    const done = curTarget(ex);
+    const sideJa = ex.uni ? " " + SIDE_JA[ex.side] : "";
+    ex.sets.push({ no: ex.setNo, seconds: done, side: ex.side });
+    recordSet(ex.name, ex.slot, ex.setNo, done, ex.side);
+    Object.assign(ex, nextPos(ex));
+    phaseDisp.textContent = "";
+    updateIdleUI();
     timeDisp.textContent = "0";
     timeDisp.className = "time done";
-    phaseDisp.textContent = "";
-    subDisp.innerHTML = `セット${ex.setNo} 完了 ─ <b>${ex.targetSeconds}秒</b>。ここで止めるのが正解`;
-    ex.setNo += 1;
-    setLabel.innerHTML = `<b>${ex.name}</b> ─ セット${ex.setNo}・8割で止める`;
-    mainBtn.textContent = `セット${ex.setNo} 開始`;
-    mainBtn.classList.remove("running");
-    renderExList();
-    renderSets();
+    subDisp.innerHTML = `セット${ex.sets[ex.sets.length - 1].no}${sideJa} 完了 ─ <b>${done}秒</b>。ここで止めるのが正解`;
   }
 
   function stopIfRunning() {
@@ -1015,9 +1069,10 @@
     } else {
       clearRecordedExercise(ex.name);
       ex.sets = [];
-      ex.baseSeconds = null;
-      ex.targetSeconds = null;
+      ex.base = { L: null, R: null };
+      ex.target = { L: null, R: null };
       ex.setNo = 1;
+      ex.side = ex.uni ? "L" : null;
     }
     updateIdleUI();
   }
