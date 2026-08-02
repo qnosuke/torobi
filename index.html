@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#16120e">
+<title>トロビ タイマー</title>
+<style>
+  :root {
+    --bg: #16120e;
+    --surface: #221c15;
+    --surface-2: #2d251b;
+    --ember: #ff7a2f;
+    --ember-dim: #b85a24;
+    --text: #f2e9de;
+    --text-dim: #a89a88;
+    --green: #7fc97f;
+    --radius: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .app {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 2px;
+  }
+  header h1 { font-size: 18px; font-weight: 700; letter-spacing: .12em; }
+  header h1 span { color: var(--ember); }
+  header .tagline { font-size: 11px; color: var(--text-dim); letter-spacing: .08em; }
+
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+
+  /* ---- tempo ---- */
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row .label { font-size: 12px; color: var(--text-dim); flex: 0 0 auto; margin-right: 4px; }
+  .seg { display: flex; flex: 1; background: var(--surface-2); border-radius: 10px; padding: 3px; }
+  .seg button {
+    flex: 1; border: 0; background: transparent; color: var(--text-dim);
+    font-size: 13px; font-weight: 600; padding: 8px 4px; border-radius: 8px;
+    font-family: inherit; cursor: pointer; transition: background .15s, color .15s;
+  }
+  .seg button.on { background: var(--ember-dim); color: var(--text); }
+  .toggle {
+    flex: 0 0 auto; border: 0; border-radius: 10px; padding: 11px 14px;
+    background: var(--surface-2); color: var(--text-dim);
+    font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+  }
+  .toggle.on { background: var(--ember-dim); color: var(--text); }
+
+  /* ---- main display ---- */
+  .display {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 6px; padding: 26px 14px;
+    position: relative; overflow: hidden;
+  }
+  .set-label { font-size: 14px; color: var(--text-dim); letter-spacing: .1em; }
+  .set-label b { color: var(--ember); font-size: 16px; }
+  .time {
+    font-size: 84px; font-weight: 200; line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+  }
+  .time.count-down { color: var(--ember); }
+  .time.done { color: var(--green); }
+  .sub { font-size: 14px; color: var(--text-dim); min-height: 20px; }
+  .sub b { color: var(--text); }
+  .beat {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(circle at 50% 60%, rgba(255,122,47,.22), transparent 65%);
+    opacity: 0; transition: opacity .12s;
+  }
+  .beat.flash { opacity: 1; transition: opacity 0s; }
+  .phase { font-size: 15px; letter-spacing: .3em; color: var(--ember); min-height: 22px; font-weight: 600; }
+
+  /* ---- controls ---- */
+  .main-btn {
+    width: 100%; border: 0; border-radius: var(--radius);
+    padding: 22px; font-size: 20px; font-weight: 700; font-family: inherit;
+    background: var(--ember); color: #1c1207; cursor: pointer;
+    letter-spacing: .1em;
+    transition: filter .1s;
+  }
+  .main-btn:active { filter: brightness(.85); }
+  .main-btn.running { background: var(--surface-2); color: var(--text); }
+  .sub-actions { display: flex; gap: 10px; }
+  .sub-actions button {
+    flex: 1; border: 0; border-radius: 12px; padding: 12px;
+    background: var(--surface); color: var(--text-dim);
+    font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+  }
+  .sub-actions button:active { background: var(--surface-2); }
+
+  /* ---- set history ---- */
+  .sets { display: flex; flex-direction: column; gap: 8px; }
+  .sets .empty { font-size: 12px; color: var(--text-dim); text-align: center; padding: 6px; }
+  .set-row {
+    display: flex; align-items: baseline; gap: 10px;
+    font-size: 14px; padding: 8px 10px;
+    background: var(--surface-2); border-radius: 10px;
+  }
+  .set-row .n { color: var(--text-dim); font-size: 12px; flex: 0 0 4.5em; }
+  .set-row .s { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .set-row .r { color: var(--text-dim); font-size: 12px; margin-left: auto; }
+  .hint { font-size: 11px; color: var(--text-dim); line-height: 1.7; padding: 0 4px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>トロビ<span>.</span>タイマー</h1>
+    <div class="tagline">強火にしない。</div>
+  </header>
+
+  <div class="card row">
+    <span class="label">テンポ</span>
+    <div class="seg" id="tempoSeg">
+      <button data-down="2" class="on">2秒↓ 2秒↑</button>
+      <button data-down="4">4秒↓ 2秒↑</button>
+    </div>
+    <button class="toggle on" id="metroToggle">♪</button>
+  </div>
+
+  <div class="card display">
+    <div class="beat" id="beatFlash"></div>
+    <div class="set-label" id="setLabel">セット <b>1</b> ─ 全力。崩れる直前まで</div>
+    <div class="time" id="timeDisp">0</div>
+    <div class="phase" id="phaseDisp"></div>
+    <div class="sub" id="subDisp">タップで開始、限界が来たらタップで終了</div>
+  </div>
+
+  <button class="main-btn" id="mainBtn">開始</button>
+
+  <div class="sub-actions">
+    <button id="nextExerciseBtn">次の種目へ（リセット）</button>
+  </div>
+
+  <div class="card sets" id="setList">
+    <div class="empty">まだ記録がありません</div>
+  </div>
+
+  <div class="hint">
+    1セット目はストップウォッチ。止めた秒数の8割が、2セット目以降のカウントダウンに自動セットされます。メトロノーム（♪）はテンポに合わせて鳴り、下ろし始めは低い音・上げ始めは高い音です。
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---- state ----
+  const state = {
+    running: false,
+    mode: "up",          // "up" = stopwatch (set 1), "down" = countdown (set 2+)
+    setNo: 1,
+    baseSeconds: null,   // set 1 result
+    targetSeconds: null, // 80% of base
+    startTime: 0,
+    elapsed: 0,
+    sets: [],            // {no, seconds}
+    tempoDown: 2,        // seconds for lowering
+    tempoUp: 2,          // seconds for raising
+    metronome: true,
+    rafId: null,
+    lastBeatIndex: -1,
+    wakeLock: null,
+  };
+
+  // ---- elements ----
+  const $ = id => document.getElementById(id);
+  const timeDisp = $("timeDisp");
+  const subDisp = $("subDisp");
+  const setLabel = $("setLabel");
+  const phaseDisp = $("phaseDisp");
+  const mainBtn = $("mainBtn");
+  const setList = $("setList");
+  const beatFlash = $("beatFlash");
+  const metroToggle = $("metroToggle");
+  const tempoSeg = $("tempoSeg");
+
+  // ---- audio ----
+  let audioCtx = null;
+  function ensureAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  }
+  function beep(freq, dur, gainVal) {
+    if (!audioCtx) return;
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(gainVal, t + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + dur + 0.02);
+  }
+  const beepDown = () => beep(440, 0.12, 0.5);   // start of lowering: low
+  const beepUp   = () => beep(880, 0.12, 0.5);   // start of raising: high
+  function alarm() {
+    if (!audioCtx) return;
+    [0, 0.18, 0.36, 0.54].forEach((d, i) => {
+      setTimeout(() => beep(i === 3 ? 1320 : 990, 0.15, 0.6), d * 1000);
+    });
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
+  }
+
+  // ---- wake lock (keep screen on while running) ----
+  async function acquireWakeLock() {
+    try {
+      if ("wakeLock" in navigator) {
+        state.wakeLock = await navigator.wakeLock.request("screen");
+      }
+    } catch (e) { /* not critical */ }
+  }
+  function releaseWakeLock() {
+    if (state.wakeLock) { state.wakeLock.release().catch(() => {}); state.wakeLock = null; }
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && state.running) acquireWakeLock();
+  });
+
+  // ---- helpers ----
+  const repSeconds = () => state.tempoDown + state.tempoUp;
+  const toReps = sec => Math.floor(sec / repSeconds());
+
+  function fmt(sec) {
+    return String(Math.max(0, Math.ceil(sec)));
+  }
+
+  function renderSets() {
+    if (state.sets.length === 0) {
+      setList.innerHTML = '<div class="empty">まだ記録がありません</div>';
+      return;
+    }
+    setList.innerHTML = state.sets.map(s => {
+      const mark = s.no === 1 ? "（基準値）" : "";
+      return `<div class="set-row">
+        <span class="n">セット${s.no}</span>
+        <span class="s">${s.seconds}秒</span>
+        <span class="r">約${toReps(s.seconds)}回 ${mark}</span>
+      </div>`;
+    }).join("");
+  }
+
+  function updateIdleUI() {
+    if (state.setNo === 1) {
+      setLabel.innerHTML = 'セット <b>1</b> ─ 全力。崩れる直前まで';
+      subDisp.textContent = "タップで開始、限界が来たらタップで終了";
+      timeDisp.textContent = "0";
+      timeDisp.className = "time";
+      mainBtn.textContent = "開始";
+    } else {
+      setLabel.innerHTML = `セット <b>${state.setNo}</b> ─ 8割で止める`;
+      subDisp.innerHTML = `1セット目 <b>${state.baseSeconds}秒</b> → 目標 <b>${state.targetSeconds}秒</b>（約${toReps(state.targetSeconds)}回）`;
+      timeDisp.textContent = fmt(state.targetSeconds);
+      timeDisp.className = "time count-down";
+      mainBtn.textContent = `セット${state.setNo} 開始`;
+    }
+    phaseDisp.textContent = "";
+    mainBtn.classList.remove("running");
+  }
+
+  // ---- metronome / phase within a rep ----
+  function handleBeats(elapsed) {
+    const rep = repSeconds();
+    const inRep = elapsed % rep;
+    const phase = inRep < state.tempoDown ? "down" : "up";
+    phaseDisp.textContent = phase === "down" ? "↓ 下ろす" : "↑ 上げる";
+
+    // beat index: one at each phase boundary
+    const repIndex = Math.floor(elapsed / rep);
+    const beatIndex = repIndex * 2 + (phase === "up" ? 1 : 0);
+    if (beatIndex !== state.lastBeatIndex) {
+      state.lastBeatIndex = beatIndex;
+      if (state.metronome && elapsed > 0.05) {
+        phase === "down" ? beepDown() : beepUp();
+      }
+      beatFlash.classList.add("flash");
+      setTimeout(() => beatFlash.classList.remove("flash"), 100);
+    }
+  }
+
+  // ---- main loop ----
+  function tick() {
+    if (!state.running) return;
+    const now = performance.now();
+    const elapsed = (now - state.startTime) / 1000;
+    state.elapsed = elapsed;
+
+    if (state.mode === "up") {
+      timeDisp.textContent = fmt(Math.floor(elapsed));
+      subDisp.innerHTML = `約 <b>${toReps(elapsed)}</b> 回`;
+      handleBeats(elapsed);
+    } else {
+      const remain = state.targetSeconds - elapsed;
+      if (remain <= 0) {
+        finishCountdown();
+        return;
+      }
+      timeDisp.textContent = fmt(remain);
+      subDisp.innerHTML = `目標 <b>${state.targetSeconds}秒</b>（約${toReps(state.targetSeconds)}回）`;
+      handleBeats(elapsed);
+    }
+    state.rafId = requestAnimationFrame(tick);
+  }
+
+  // ---- flow ----
+  function start() {
+    ensureAudio();
+    acquireWakeLock();
+    state.running = true;
+    state.mode = state.setNo === 1 ? "up" : "down";
+    state.startTime = performance.now();
+    state.lastBeatIndex = -1;
+    mainBtn.textContent = "終了";
+    mainBtn.classList.add("running");
+    setLabel.innerHTML = `セット <b>${state.setNo}</b>`;
+    timeDisp.className = state.mode === "down" ? "time count-down" : "time";
+    if (state.metronome) beepDown();
+    state.rafId = requestAnimationFrame(tick);
+  }
+
+  function stop() {
+    state.running = false;
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    releaseWakeLock();
+
+    const seconds = Math.round(state.elapsed);
+    if (state.mode === "up") {
+      // set 1 finished -> becomes the baseline
+      state.baseSeconds = seconds;
+      state.targetSeconds = Math.max(1, Math.round(seconds * 0.8));
+      state.sets.push({ no: state.setNo, seconds });
+      timeDisp.className = "time done";
+      subDisp.innerHTML = `記録 <b>${seconds}秒</b> ＝ 約${toReps(seconds)}回。次からは <b>${state.targetSeconds}秒</b> で止めます`;
+    } else {
+      // stopped a countdown early: record actual seconds done
+      state.sets.push({ no: state.setNo, seconds });
+      subDisp.innerHTML = `セット${state.setNo}：${seconds}秒で終了`;
+    }
+    state.setNo += 1;
+    renderSets();
+    phaseDisp.textContent = "";
+    mainBtn.textContent = `セット${state.setNo} 開始`;
+    mainBtn.classList.remove("running");
+    setLabel.innerHTML = `セット <b>${state.setNo}</b> ─ 8割で止める`;
+  }
+
+  function finishCountdown() {
+    state.running = false;
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    releaseWakeLock();
+    alarm();
+
+    state.sets.push({ no: state.setNo, seconds: state.targetSeconds });
+    timeDisp.textContent = "0";
+    timeDisp.className = "time done";
+    phaseDisp.textContent = "";
+    subDisp.innerHTML = `セット${state.setNo} 完了 ─ <b>${state.targetSeconds}秒</b>。ここで止めるのが正解`;
+    state.setNo += 1;
+    renderSets();
+    mainBtn.textContent = `セット${state.setNo} 開始`;
+    mainBtn.classList.remove("running");
+    setLabel.innerHTML = `セット <b>${state.setNo}</b> ─ 8割で止める`;
+  }
+
+  function resetExercise() {
+    if (state.running) {
+      state.running = false;
+      if (state.rafId) cancelAnimationFrame(state.rafId);
+      releaseWakeLock();
+    }
+    state.setNo = 1;
+    state.baseSeconds = null;
+    state.targetSeconds = null;
+    state.elapsed = 0;
+    state.sets = [];
+    renderSets();
+    updateIdleUI();
+  }
+
+  // ---- events ----
+  mainBtn.addEventListener("click", () => {
+    state.running ? stop() : start();
+  });
+
+  $("nextExerciseBtn").addEventListener("click", resetExercise);
+
+  metroToggle.addEventListener("click", () => {
+    state.metronome = !state.metronome;
+    metroToggle.classList.toggle("on", state.metronome);
+    if (state.metronome) ensureAudio();
+  });
+
+  tempoSeg.addEventListener("click", e => {
+    const btn = e.target.closest("button");
+    if (!btn || state.running) return;
+    tempoSeg.querySelectorAll("button").forEach(b => b.classList.remove("on"));
+    btn.classList.add("on");
+    state.tempoDown = Number(btn.dataset.down);
+    renderSets();
+    if (!state.running) updateIdleUI();
+  });
+
+  updateIdleUI();
+})();
+</script>
+</body>
+</html>
