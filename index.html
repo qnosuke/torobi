@@ -75,6 +75,19 @@
     position: relative;
     padding: 6px 0 14px;
     min-height: 380px;
+    transition: transform .2s cubic-bezier(.2,.8,.3,1);
+    touch-action: pan-y;
+  }
+  .stage.dragging { transition: none; }
+  .stage.enter-l { animation: enterL .24s ease-out; }
+  .stage.enter-r { animation: enterR .24s ease-out; }
+  @keyframes enterL {
+    from { transform: translateX(-34px); opacity: .3; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes enterR {
+    from { transform: translateX(34px); opacity: .3; }
+    to { transform: translateX(0); opacity: 1; }
   }
   .beat {
     position: absolute; inset: -20px 0; pointer-events: none;
@@ -275,6 +288,7 @@
       <p class="note">
         テンポは週と種目から自動で決まります（単関節は第7週から4秒かけて下ろす）。メニューは前回やった方の逆が選ばれます。<br><br>
         1セット目は限界の直前まで。止めた秒数の8割が、次のセットのカウントダウンになります。片側種目は左→右で1セットです。<br><br>
+        種目の移動は左右スワイプ、または上のドットをタップ。<br><br>
         音が鳴らないときは、本体の音量を上げてから「鳴らす」を押し直してください（確認音が鳴ります）。
       </p>
     </section>
@@ -567,7 +581,7 @@
   const dots = $("dots"), exNameBtn = $("exName"), exNameText = $("exNameText");
   const exMeta = $("exMeta"), howto = $("howto"), timeDisp = $("timeDisp");
   const phaseDisp = $("phaseDisp"), subDisp = $("subDisp"), mainBtn = $("mainBtn");
-  const beatFlash = $("beatFlash"), extraSetBtn = $("extraSetBtn");
+  const beatFlash = $("beatFlash"), extraSetBtn = $("extraSetBtn"), stage = document.querySelector(".stage");
   const weekDisp = $("weekDisp"), daySeg = $("daySeg"), prepSeg = $("prepSeg"), soundSeg = $("soundSeg");
   const bodyW = $("bodyW"), bodyF = $("bodyF"), bodyM = $("bodyM");
   const exportMsg = $("exportMsg"), recToday = $("recToday");
@@ -867,16 +881,24 @@
     subDisp.innerHTML = `<b>${done}秒</b> 完了。ここで止めるのが正解`;
   }
 
-  function goto(i) {
+  function goto(i, dir = 0) {
     if (state.running) cancel();
-    state.exIndex = Math.max(0, Math.min(i, state.exercises.length - 1));
+    const next = Math.max(0, Math.min(i, state.exercises.length - 1));
+    if (next === state.exIndex && dir) return false;
+    state.exIndex = next;
     howto.classList.remove("open");
     exNameBtn.classList.remove("open");
     autoTempo();
     renderIdle();
+    if (dir) {
+      stage.classList.remove("enter-l", "enter-r");
+      void stage.offsetWidth;               // アニメーションを確実に再生させる
+      stage.classList.add(dir > 0 ? "enter-l" : "enter-r");
+    }
+    return true;
   }
   function advance() {
-    if (state.exIndex < state.exercises.length - 1) goto(state.exIndex + 1);
+    if (state.exIndex < state.exercises.length - 1) goto(state.exIndex + 1, 1);
     else {
       renderIdle();
       subDisp.innerHTML = "今日はここまで。<b>おつかれさまでした 🔥</b>";
@@ -1034,8 +1056,45 @@
 
   dots.addEventListener("click", e => {
     const b = e.target.closest("button");
-    if (b) goto(Number(b.dataset.i));
+    if (!b) return;
+    const i = Number(b.dataset.i);
+    goto(i, i === state.exIndex ? 0 : (i > state.exIndex ? 1 : -1));
   });
+
+  // 左右スワイプで種目を移動（計測中とシート表示中は無効）
+  (() => {
+    let x0 = null, y0 = null, dragging = false;
+    const target = document.querySelector(".app");
+    const active = () => !state.running && !sheetBg.classList.contains("open");
+    target.addEventListener("touchstart", e => {
+      if (!active() || e.touches.length !== 1) { x0 = null; return; }
+      x0 = e.touches[0].clientX;
+      y0 = e.touches[0].clientY;
+      dragging = false;
+    }, { passive: true });
+    target.addEventListener("touchmove", e => {
+      if (x0 == null) return;
+      const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
+      if (!dragging && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+        dragging = true;
+        stage.classList.add("dragging");
+      }
+      if (dragging) stage.style.transform = `translateX(${dx * 0.4}px)`;
+    }, { passive: true });
+    target.addEventListener("touchend", e => {
+      if (x0 == null) return;
+      const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+      stage.classList.remove("dragging");
+      stage.style.transform = "";
+      x0 = null;
+      if (!dragging) return;
+      dragging = false;
+      if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+        const dir = dx < 0 ? 1 : -1;
+        goto(state.exIndex + dir, dir);
+      }
+    });
+  })();
 
   exNameBtn.addEventListener("click", () => {
     howto.classList.toggle("open");
