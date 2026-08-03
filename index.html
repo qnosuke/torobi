@@ -96,13 +96,23 @@
   }
   .beat.flash { opacity: 1; transition: opacity 0s; }
 
-  .ex-name {
-    background: transparent; color: var(--text);
-    font-size: 23px; font-weight: 700; letter-spacing: .02em;
-    padding: 4px 6px; display: flex; align-items: center; gap: 7px;
+  .ex-title {
+    display: flex; align-items: center; justify-content: center; gap: 9px;
+    padding: 4px 6px; max-width: 100%;
   }
-  .ex-name .caret { font-size: 12px; color: var(--text-dim); transition: transform .2s; }
-  .ex-name.open .caret { transform: rotate(180deg); }
+  .ex-title .name {
+    color: var(--text); font-size: 23px; font-weight: 700; letter-spacing: .02em;
+  }
+  .help-btn {
+    flex: 0 0 auto;
+    width: 23px; height: 23px; border-radius: 50%;
+    background: transparent; color: var(--text-dim);
+    border: 1.5px solid #4a4034;
+    font-size: 13px; font-weight: 700; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .18s, color .18s, border-color .18s;
+  }
+  .help-btn.open { background: var(--ember-dim); color: var(--text); border-color: var(--ember-dim); }
   .ex-meta { font-size: 12px; color: var(--text-dim); letter-spacing: .06em; margin-top: 1px; }
 
   .howto {
@@ -112,6 +122,7 @@
     max-height: 0; overflow: hidden; opacity: 0;
     transition: max-height .25s ease, opacity .2s, padding .25s;
     text-align: left;
+    white-space: pre-line;   /* ウォームアップの手順を1行ずつ表示するため */
   }
   .howto.open { max-height: 320px; opacity: 1; padding: 13px 14px; }
 
@@ -230,7 +241,10 @@
 
   <div class="stage">
     <div class="beat" id="beatFlash"></div>
-    <button class="ex-name" id="exName"><span id="exNameText">—</span><span class="caret">▾</span></button>
+    <div class="ex-title">
+      <span class="name" id="exNameText">—</span>
+      <button class="help-btn" id="helpBtn" aria-label="やり方を見る">?</button>
+    </div>
     <div class="ex-meta" id="exMeta"></div>
     <div class="howto" id="howto"></div>
     <div class="time" id="timeDisp">0</div>
@@ -288,7 +302,7 @@
       <p class="note">
         テンポは週と種目から自動で決まります（単関節は第7週から4秒かけて下ろす）。メニューは前回やった方の逆が選ばれます。<br><br>
         1セット目は限界の直前まで。止めた秒数の8割が、次のセットのカウントダウンになります。片側種目は左→右で1セットです。<br><br>
-        種目の移動は左右スワイプ、または上のドットをタップ。<br><br>
+        やり方は種目名の横の <b>?</b> から。種目の移動は左右スワイプ、または上のドットをタップ。<br><br>
         音が鳴らないときは、本体の音量を上げてから「鳴らす」を押し直してください（確認音が鳴ります）。
       </p>
     </section>
@@ -578,7 +592,7 @@
 
   // ---- elements ----
   const $ = id => document.getElementById(id);
-  const dots = $("dots"), exNameBtn = $("exName"), exNameText = $("exNameText");
+  const dots = $("dots"), helpBtn = $("helpBtn"), exNameText = $("exNameText");
   const exMeta = $("exMeta"), howto = $("howto"), timeDisp = $("timeDisp");
   const phaseDisp = $("phaseDisp"), subDisp = $("subDisp"), mainBtn = $("mainBtn");
   const beatFlash = $("beatFlash"), extraSetBtn = $("extraSetBtn"), stage = document.querySelector(".stage");
@@ -781,6 +795,8 @@
     acquireWakeLock();
     state.running = true;
     state.lastBeatIndex = -1;
+    howto.classList.remove("open");     // 計測中は数字だけにする
+    helpBtn.classList.remove("open");
     timeDisp.classList.remove("tiny");
     extraSetBtn.classList.add("hide");
     if (ex.warmup) {
@@ -887,7 +903,7 @@
     if (next === state.exIndex && dir) return false;
     state.exIndex = next;
     howto.classList.remove("open");
-    exNameBtn.classList.remove("open");
+    helpBtn.classList.remove("open");
     autoTempo();
     renderIdle();
     if (dir) {
@@ -1096,9 +1112,9 @@
     });
   })();
 
-  exNameBtn.addEventListener("click", () => {
+  helpBtn.addEventListener("click", () => {
     howto.classList.toggle("open");
-    exNameBtn.classList.toggle("open");
+    helpBtn.classList.toggle("open");
   });
 
   $("openSettings").addEventListener("click", () => openSheet(settingsSheet));
