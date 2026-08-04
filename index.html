@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#16120e">
-<title>トロビ タイマー</title>
+<title>TOROBI</title>
 <style>
   :root {
     --bg: #16120e;
@@ -46,8 +46,12 @@
     display: flex; justify-content: space-between; align-items: center;
     padding: 2px 2px 0;
   }
-  header h1 { font-size: 15px; font-weight: 700; letter-spacing: .14em; color: var(--text-dim); }
-  header h1 span { color: var(--ember); }
+  header h1 {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 15px; font-weight: 500; letter-spacing: .45em;
+    color: var(--text-dim);
+  }
+  header h1 span { font-size: 13px; letter-spacing: 0; }
   .icon-btn {
     background: transparent; color: var(--text-dim);
     font-size: 19px; padding: 6px 8px; border-radius: 10px; line-height: 1;
@@ -233,7 +237,7 @@
 <body>
 <div class="app">
   <header>
-    <h1>トロビ<span>.</span></h1>
+    <h1>TOROBI<span>🔥</span></h1>
     <button class="icon-btn" id="openSettings" aria-label="設定">⚙</button>
   </header>
 
@@ -1012,7 +1016,7 @@
     const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
     const file = new File([blob], `torobi-${todayKey()}.csv`, { type: "text/csv" });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: "トロビ 記録" }); return; }
+      try { await navigator.share({ files: [file], title: "TOROBI 記録" }); return; }
       catch (e) { if (e && e.name === "AbortError") return; }
     }
     const url = URL.createObjectURL(blob);
