@@ -54,9 +54,10 @@
   header h1 span { font-size: 13px; margin-left: .25em; }
   .icon-btn {
     background: transparent; color: var(--text-dim);
-    font-size: 19px; padding: 6px 8px; border-radius: 10px; line-height: 1;
+    font-size: 20px; padding: 5px 7px; border-radius: 10px; line-height: 1;
+    opacity: .85;
   }
-  .icon-btn:active { background: var(--surface); }
+  .icon-btn:active { background: var(--surface); opacity: 1; }
 
   /* ---- progress dots ---- */
   .dots { display: flex; justify-content: center; gap: 4px; padding: 16px 0 6px; }
@@ -238,7 +239,7 @@
 <div class="app">
   <header>
     <h1>TOROBI<span>🔥</span></h1>
-    <button class="icon-btn" id="openSettings" aria-label="設定">⚙</button>
+    <button class="icon-btn" id="openSettings" aria-label="設定">🧑‍🍳</button>
   </header>
 
   <div class="dots" id="dots"></div>
