@@ -14,9 +14,10 @@ import {
 import { parseCsvText } from "./csvImport.js";
 import { buildTodayText, buildCsv } from "./exportData.js";
 import {
-  ensureAudio, stopSilentLoop, setSoundEnabled, beepDown, beepUp, beepPrep,
-  beepStep, alarm, acquireWakeLock, releaseWakeLock, reacquireWakeLockOnVisible,
+  ensureAudio, stopSilentLoop, setSoundEnabled,
+  acquireWakeLock, releaseWakeLock, reacquireWakeLockOnVisible,
 } from "./audio.js";
+import { initCues, cueDown, cueUp, cuePrep, cueStep, cueAlarm } from "./cues.js";
 import { METRICS } from "./scan/metrics.js";
 import { createScanSheet } from "./scan/scanSheet.js";
 
@@ -129,7 +130,7 @@ function renderIdle() {
     exMeta.textContent = ex.done ? "3分 ─ 完了 ✓" : "3分・4ステップ";
     timeDisp.textContent = String(WARMUP_TOTAL);
     timeDisp.className = "time";
-    subDisp.textContent = ex.done ? "" : "音が切り替わったら次の動きへ";
+    subDisp.textContent = ex.done ? "" : "合図が来たら次の動きへ";
     mainBtn.textContent = ex.done ? "次の種目へ ▸" : "ウォームアップ開始";
     extraSetBtn.classList.add("hide");
     return;
@@ -177,7 +178,7 @@ function handleBeats(elapsed) {
   const beatIndex = Math.floor(elapsed / rep) * 2 + (down ? 0 : 1);
   if (beatIndex !== state.lastBeatIndex) {
     state.lastBeatIndex = beatIndex;
-    if (elapsed > 0.05) (down ? beepDown : beepUp)();
+    if (elapsed > 0.05) (down ? cueDown : cueUp)();
     flashBeat();
   }
 }
@@ -204,8 +205,7 @@ function tick() {
     subDisp.innerHTML = `<b>${WARMUP_STEPS[idx].name}</b>`;
     if (idx !== state.lastWuStep) {
       state.lastWuStep = idx;
-      if (elapsed > 0.05) beepStep();
-      if (navigator.vibrate) navigator.vibrate(150);
+      if (elapsed > 0.05) cueStep();
       flashBeat();
     }
   } else if (state.mode === "prep") {
@@ -214,7 +214,7 @@ function tick() {
     else {
       const shown = Math.ceil(remain);
       timeDisp.textContent = String(shown);
-      if (shown !== state.lastPrepSec) { state.lastPrepSec = shown; beepPrep(); flashBeat(); }
+      if (shown !== state.lastPrepSec) { state.lastPrepSec = shown; cuePrep(); flashBeat(); }
     }
   } else if (state.mode === "up") {
     timeDisp.textContent = fmt(Math.floor(elapsed));
@@ -271,7 +271,7 @@ function startWork() {
   state.lastBeatIndex = -1;
   timeDisp.className = state.mode === "down" ? "time count-down" : "time";
   mainBtn.textContent = "終了";
-  beepDown();
+  cueDown();
 }
 
 function halt() {
@@ -288,7 +288,7 @@ function cancel() {
 
 function finishWarmup() {
   halt();
-  alarm();
+  cueAlarm();
   setTimeout(stopSilentLoop, 1500);
   cur().done = true;
   advance();
@@ -326,7 +326,7 @@ function stop() {
 
 function finishCountdown() {
   halt();
-  alarm();
+  cueAlarm();
   setTimeout(stopSilentLoop, 1500);
   const ex = cur();
   const done = curGoal(ex);
@@ -565,7 +565,7 @@ soundSeg.addEventListener("click", e => {
   soundSeg.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
   if (on) {
     ensureAudio();
-    beepUp();
+    cueUp();
     if (!state.running) setTimeout(stopSilentLoop, 500);
   }
 });
@@ -675,6 +675,7 @@ importFile.addEventListener("change", async () => {
 });
 
 // ---- init ----
+initCues();
 reacquireWakeLockOnVisible(() => state.running);
 daySeg.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.day === state.day));
 saveWeek(state.week);
