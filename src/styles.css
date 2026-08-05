@@ -264,3 +264,12 @@
   font-variant-numeric: tabular-nums;
 }
 .scan-chip.done { background: var(--ember-dim); color: var(--text); }
+
+/* ---- 音を消したときの合図（画面全体の点滅） ---- */
+.cue-flash {
+  position: fixed; inset: 0; z-index: 20; pointer-events: none;
+  background: var(--ember);
+  opacity: 0; transition: opacity .16s ease-out;
+}
+.cue-flash.on { opacity: .16; transition: opacity 0s; }
+.cue-flash.strong.on { opacity: .42; }
