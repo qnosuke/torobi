@@ -81,6 +81,17 @@
       </div>
     </section>
     <section>
+      <div class="rec-day">バックアップから戻す</div>
+      <div class="btn-row">
+        <button id="importBtn">CSVを読み込む</button>
+        <input type="file" id="importFile" accept=".csv,text/csv" hidden>
+      </div>
+      <div class="msg" id="importMsg"></div>
+      <p class="note">
+        書き出したCSVを読み込むと、記録が戻ります。今ある日の記録は消しません（同じ日付があればそのまま残します）。
+      </p>
+    </section>
+    <section>
       <p class="note">
         テンポは週と種目から自動で決まります（単関節は第7週から4秒かけて下ろす）。メニューは前回やった方の逆が選ばれます。<br><br>
         1セット目は限界の直前まで。止めた秒数の8割が、次のセットのカウントダウンになります。片側種目は左→右で1セットです。<br><br>
