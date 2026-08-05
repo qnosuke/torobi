@@ -107,6 +107,22 @@ export function loadTodayBody() {
   return (loadLog()[todayKey()] || {}).body || {};
 }
 
+/**
+ * 書き出したCSVから記録を戻す。今ある日の記録は消さず、無い日だけ足す。
+ * @returns {{added: number, kept: number}}
+ */
+export function mergeLog(days) {
+  const log = loadLog();
+  let added = 0, kept = 0;
+  for (const [date, entry] of Object.entries(days)) {
+    if (log[date]) { kept++; continue; }
+    log[date] = entry;
+    added++;
+  }
+  saveLog(log);
+  return { added, kept };
+}
+
 /** 同じ種目・同じ側の直近（今日より前）の1セット目の秒数 */
 export function lastTimeSeconds(exName, side = null) {
   const log = loadLog();

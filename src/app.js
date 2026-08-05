@@ -9,7 +9,9 @@ import {
 import {
   loadWeek, saveWeek, loadLog, recordSet, clearRecordedExercise,
   saveBody, loadTodayBody, lastTimeSeconds, autoDay, todayKey, SIDE_JA,
+  mergeLog,
 } from "./storage.js";
+import { parseCsvText } from "./csvImport.js";
 import { buildTodayText, buildCsv } from "./exportData.js";
 import {
   ensureAudio, stopSilentLoop, setSoundEnabled, beepDown, beepUp, beepPrep,
@@ -96,6 +98,7 @@ const phaseDisp = $("phaseDisp"), subDisp = $("subDisp"), mainBtn = $("mainBtn")
 const beatFlash = $("beatFlash"), extraSetBtn = $("extraSetBtn"), stage = document.querySelector(".stage");
 const weekDisp = $("weekDisp"), daySeg = $("daySeg"), prepSeg = $("prepSeg"), soundSeg = $("soundSeg");
 const exportMsg = $("exportMsg"), recToday = $("recToday");
+const importBtn = $("importBtn"), importFile = $("importFile"), importMsg = $("importMsg");
 const sheetBg = $("sheetBg"), settingsSheet = $("settingsSheet"), recordSheet = $("recordSheet");
 const bodyGrid = $("bodyGrid");
 
@@ -635,6 +638,40 @@ $("resetExBtn").addEventListener("click", () => {
   renderRecord();
   renderIdle();
   closeSheets();
+});
+
+// ---- バックアップから戻す ----
+function showImportMsg(text, ok) {
+  importMsg.textContent = text;
+  importMsg.style.color = ok ? "var(--green)" : "var(--ember)";
+}
+
+importBtn.addEventListener("click", () => importFile.click());
+
+importFile.addEventListener("change", async () => {
+  const file = importFile.files?.[0];
+  importFile.value = "";              // 同じファイルを続けて選べるようにする
+  if (!file) return;
+  let text;
+  try { text = await file.text(); }
+  catch (e) { showImportMsg("ファイルを読めませんでした", false); return; }
+
+  const parsed = parseCsvText(text);
+  if (!parsed.ok) {
+    showImportMsg(`${parsed.error.line}行目: ${parsed.error.reason}`, false);
+    return;
+  }
+  const { added, kept } = mergeLog(parsed.days);
+  showImportMsg(
+    added > 0
+      ? `${added}日分を戻しました${kept > 0 ? `（${kept}日分はすでにあるので残しました）` : ""}`
+      : `新しく戻す記録はありませんでした（${kept}日分はすでにあります）`,
+    added > 0);
+  // 戻した記録を画面に反映する
+  buildExercises();
+  autoTempo();
+  renderIdle();
+  renderBodyInputs();
 });
 
 // ---- init ----
