@@ -121,7 +121,7 @@
     text-align: left;
     white-space: pre-line;   /* ウォームアップの手順を1行ずつ表示するため */
   }
-  .howto.open { max-height: 320px; opacity: 1; padding: 13px 14px; }
+  .howto.open { max-height: 560px; opacity: 1; padding: 13px 14px; }
 
   .time {
     font-size: 92px; font-weight: 200; line-height: 1;
@@ -273,3 +273,12 @@
 }
 .cue-flash.on { opacity: .16; transition: opacity 0s; }
 .cue-flash.strong.on { opacity: .42; }
+
+/* ---- やり方の動画 ---- */
+.howto-video {
+  display: block; width: 100%; max-width: 300px; margin: 0 auto 10px;
+  aspect-ratio: 4 / 3; border-radius: 10px; background: #0e0b08;
+  object-fit: cover;
+}
+.howto-video[hidden] { display: none; }
+.howto-text { margin: 0; }
