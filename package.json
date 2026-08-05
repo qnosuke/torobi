@@ -1,0 +1,20 @@
+{
+  "name": "torobi",
+  "private": true,
+  "version": "0.3.0",
+  "type": "module",
+  "description": "TOROBI — 12週プログラムのタイマーと体組成の読み取り",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "happy-dom": "^20.10.6",
+    "vite": "^6.3.5",
+    "vite-plugin-pwa": "^1.0.0",
+    "vitest": "^3.2.4"
+  }
+}
