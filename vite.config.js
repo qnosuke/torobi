@@ -10,6 +10,19 @@ export default defineConfig(({ command }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icons/apple-touch-icon.png'],
+      // やり方の動画は数が多いので先読みしない。一度見たものだけ端末に残す。
+      workbox: {
+        runtimeCaching: [{
+          urlPattern: /\/howto\/.*\.mp4$/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'howto-video',
+            rangeRequests: true,
+            expiration: { maxEntries: 30 },
+            cacheableResponse: { statuses: [0, 200] },
+          },
+        }],
+      },
       manifest: {
         name: 'TOROBI',
         short_name: 'TOROBI',

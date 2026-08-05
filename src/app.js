@@ -94,6 +94,7 @@ function restoreToday() {
 // ---- elements ----
 const $ = id => document.getElementById(id);
 const dots = $("dots"), helpBtn = $("helpBtn"), exNameText = $("exNameText");
+const howtoVideo = $("howtoVideo"), howtoText = $("howtoText");
 const exMeta = $("exMeta"), howto = $("howto"), timeDisp = $("timeDisp");
 const phaseDisp = $("phaseDisp"), subDisp = $("subDisp"), mainBtn = $("mainBtn");
 const beatFlash = $("beatFlash"), extraSetBtn = $("extraSetBtn"), stage = document.querySelector(".stage");
@@ -108,6 +109,30 @@ function autoTempo() {
   state.tempoDown = (cur().isolation && state.week >= 7) ? 4 : 2;
 }
 
+// ---- やり方の動画 ----
+// public/howto/<slug>.mp4 があれば見せる。無ければ文字だけにする。
+// 開いたときだけ読み込むので、置いていない種目でも通信は1回で済む。
+function loadHowtoVideo(slug) {
+  if (!slug) { unloadHowtoVideo(); return; }
+  const src = `${import.meta.env.BASE_URL}howto/${slug}.mp4`;
+  if (howtoVideo.dataset.slug === slug && !howtoVideo.hidden) return;
+  howtoVideo.dataset.slug = slug;
+  howtoVideo.hidden = true;
+  howtoVideo.onerror = () => { howtoVideo.hidden = true; };
+  howtoVideo.onloadeddata = () => { howtoVideo.hidden = false; };
+  howtoVideo.src = src;
+  howtoVideo.load();
+  howtoVideo.play().catch(() => {});
+}
+
+function unloadHowtoVideo() {
+  howtoVideo.pause();
+  howtoVideo.hidden = true;
+  howtoVideo.removeAttribute("src");
+  howtoVideo.dataset.slug = "";
+  howtoVideo.load();
+}
+
 // ---- rendering ----
 function renderDots() {
   dots.innerHTML = state.exercises.map((e, i) =>
@@ -118,7 +143,7 @@ function renderDots() {
 function renderIdle() {
   const ex = cur();
   renderDots();
-  howto.textContent = ex.warmup
+  howtoText.textContent = ex.warmup
     ? WARMUP_STEPS.map((s, i) => `${i + 1}. ${s.name}（${s.sec}秒）`).join("\n")
     : ex.howto;
   exNameText.textContent = ex.name;
@@ -238,6 +263,7 @@ function start() {
   state.running = true;
   state.lastBeatIndex = -1;
   howto.classList.remove("open");     // 計測中は数字だけにする
+  unloadHowtoVideo();
   helpBtn.classList.remove("open");
   timeDisp.classList.remove("tiny");
   extraSetBtn.classList.add("hide");
@@ -346,6 +372,7 @@ function goto(i, dir = 0) {
   state.exIndex = next;
   howto.classList.remove("open");
   helpBtn.classList.remove("open");
+  unloadHowtoVideo();
   autoTempo();
   renderIdle();
   if (dir) {
@@ -492,6 +519,8 @@ dots.addEventListener("click", e => {
 })();
 
 helpBtn.addEventListener("click", () => {
+  const opening = !howto.classList.contains("open");
+  opening ? loadHowtoVideo(cur().slug) : unloadHowtoVideo();
   howto.classList.toggle("open");
   helpBtn.classList.toggle("open");
 });
