@@ -356,8 +356,8 @@ export function readDigit(maskImg, box) {
  */
 export function readDisplay(maskImg) {
   const result = findBestCluster(maskImg);
-  if (!result) return { text: null, value: null };
-  return { text: result.text, value: Number(result.text) };
+  if (!result) return { text: null, value: null, boxes: null };
+  return { text: result.text, value: Number(result.text), boxes: result.boxes };
 }
 
 /**
@@ -377,11 +377,25 @@ export function recognizeGray(grayImg) {
     const result = findBestCluster(binarize(grayImg, { window }));
     if (result && (!best || result.score > best.score)) best = result;
   }
-  if (!best) return { text: null, value: null };
-  return { text: best.text, value: Number(best.text) };
+  if (!best) return { text: null, value: null, boxes: null };
+  // boxes は読み取れた数字の桁の矩形。呼び出し側が液晶の位置を追うのに使う。
+  return { text: best.text, value: Number(best.text), boxes: best.boxes };
 }
 
 /** RGBA ImageData から直接読み取るワンショットAPI */
 export function recognizeFrame(imageData) {
   return recognizeGray(toGray(imageData));
+}
+
+/** 桁の矩形群 → 全体を囲む矩形。無ければ null */
+export function boundsOf(boxes) {
+  if (!boxes || boxes.length === 0) return null;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const b of boxes) {
+    if (b.x0 < x0) x0 = b.x0;
+    if (b.y0 < y0) y0 = b.y0;
+    if (b.x1 > x1) x1 = b.x1;
+    if (b.y1 > y1) y1 = b.y1;
+  }
+  return { x0, y0, x1, y1 };
 }
