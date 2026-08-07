@@ -78,6 +78,13 @@
         </div>
       </div>
       <div class="row">
+        <span class="label">文字</span>
+        <div class="seg" id="textSeg">
+          <button data-size="normal">標準</button>
+          <button data-size="large">大きく</button>
+        </div>
+      </div>
+      <div class="row">
         <span class="label">音</span>
         <div class="seg" id="soundSeg">
           <button data-sound="on" class="on">鳴らす</button>
@@ -155,6 +162,20 @@
       枠に合わせる必要はありません。7項目そろうと自動で閉じ、記録シートの入力欄に入ります。
       読み違いはその場で直せます。
     </p>
+  </div>
+</div>
+
+
+<div class="first-run" id="firstRun" hidden>
+  <div class="first-run-inner">
+    <h2>文字の大きさを選んでください</h2>
+    <p class="note">あとから設定（🧑‍🍳）で変えられます。</p>
+    <button class="size-choice" data-size="normal">
+      <b>標準</b><span>この大きさで表示します</span>
+    </button>
+    <button class="size-choice large" data-size="large">
+      <b>大きく</b><span>この大きさで表示します</span>
+    </button>
   </div>
 </div>
 

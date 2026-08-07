@@ -9,7 +9,7 @@ import {
 import {
   loadWeek, saveWeek, loadLog, recordSet, clearRecordedExercise,
   saveBody, loadTodayBody, lastTimeSeconds, autoDay, todayKey, SIDE_JA,
-  mergeLog,
+  mergeLog, loadTextSize, saveTextSize,
 } from "./storage.js";
 import { parseCsvText } from "./csvImport.js";
 import { buildTodayText, buildCsv } from "./exportData.js";
@@ -102,7 +102,7 @@ const weekDisp = $("weekDisp"), daySeg = $("daySeg"), prepSeg = $("prepSeg"), so
 const exportMsg = $("exportMsg"), recToday = $("recToday");
 const importBtn = $("importBtn"), importFile = $("importFile"), importMsg = $("importMsg");
 const sheetBg = $("sheetBg"), settingsSheet = $("settingsSheet"), recordSheet = $("recordSheet");
-const bodyGrid = $("bodyGrid");
+const bodyGrid = $("bodyGrid"), textSeg = $("textSeg"), firstRun = $("firstRun");
 
 // ---- テンポは週と種目から自動 ----
 function autoTempo() {
@@ -669,6 +669,28 @@ $("resetExBtn").addEventListener("click", () => {
   closeSheets();
 });
 
+// ---- 文字の大きさ ----
+function applyTextSize(size) {
+  document.body.classList.toggle("text-large", size === "large");
+  textSeg.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.size === size));
+}
+
+textSeg.addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  saveTextSize(b.dataset.size);
+  applyTextSize(b.dataset.size);
+});
+
+// 初回だけ、大きさを選んでもらう（以降は設定から変えられる）
+firstRun.addEventListener("click", e => {
+  const b = e.target.closest(".size-choice");
+  if (!b) return;
+  saveTextSize(b.dataset.size);
+  applyTextSize(b.dataset.size);
+  firstRun.hidden = true;
+});
+
 // ---- バックアップから戻す ----
 function showImportMsg(text, ok) {
   importMsg.textContent = text;
@@ -704,6 +726,9 @@ importFile.addEventListener("change", async () => {
 });
 
 // ---- init ----
+const savedSize = loadTextSize();
+applyTextSize(savedSize ?? "normal");
+firstRun.hidden = savedSize != null;
 initCues();
 reacquireWakeLockOnVisible(() => state.running);
 daySeg.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.day === state.day));

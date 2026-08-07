@@ -151,3 +151,20 @@ export function autoDay() {
   const d = new Date().getDay();
   return (d >= 1 && d <= 3) ? "mon" : "thu";
 }
+
+// ---- 文字の大きさ ----
+const TEXT_KEY = "torobi.textSize";
+const SIZES = ["normal", "large"];
+
+/** 保存済みの設定。まだ選んでいなければ null（初回の選択画面を出す合図） */
+export function loadTextSize() {
+  try {
+    const v = localStorage.getItem(TEXT_KEY);
+    return SIZES.includes(v) ? v : null;
+  } catch (e) { return null; }
+}
+
+export function saveTextSize(size) {
+  if (!SIZES.includes(size)) return;
+  try { localStorage.setItem(TEXT_KEY, size); } catch (e) { /* 保存できなくても動く */ }
+}
