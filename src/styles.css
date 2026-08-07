@@ -95,10 +95,11 @@
 
   .ex-title {
     display: flex; align-items: center; justify-content: center; gap: 9px;
-    padding: 4px 6px; max-width: 100%;
+    padding: 4px 6px; max-width: 100%; flex-wrap: wrap;
   }
   .ex-title .name {
     color: var(--text); font-size: 23px; font-weight: 700; letter-spacing: .02em;
+    max-width: 100%; line-height: 1.25;
   }
   .help-btn {
     flex: 0 0 auto;
@@ -297,25 +298,30 @@
 .size-choice:active { background: var(--ember-dim); }
 .size-choice b { display: block; font-size: 20px; font-weight: 700; margin-bottom: 4px; }
 .size-choice span { font-size: 13px; color: var(--text-dim); }
-.size-choice.large b { font-size: 27px; }
-.size-choice.large span { font-size: 17px; }
+.size-choice.large b { font-size: 34px; }
+.size-choice.large span { font-size: 21px; }
 
 /* ---- 大きい文字 ---- */
-/* 数字（92px）はもともと十分大きいので触らない。読みづらいのは小さい字のほう。 */
-body.text-large .ex-title .name { font-size: 28px; }
-body.text-large .ex-meta { font-size: 15px; }
-body.text-large .howto { font-size: 16px; }
-body.text-large .howto.open { max-height: 680px; }
-body.text-large .phase { font-size: 18px; }
-body.text-large .sub { font-size: 18px; min-height: 48px; }
-body.text-large .main-btn { font-size: 24px; padding: 26px; }
-body.text-large .foot button { font-size: 16px; }
-body.text-large header h1 { font-size: 17px; }
-body.text-large .dots i { width: 11px; height: 11px; }
-body.text-large .icon-btn { font-size: 23px; }
-body.text-large .help-btn { width: 27px; height: 27px; font-size: 15px; }
+/* 運動中は端末を床に置く。1m前後の距離から読めることを基準にする。
+   メイン画面は思い切り大きく、手元で読むシート類は控えめに上げる。 */
+body.text-large .time { font-size: 150px; }
+body.text-large .time.tiny { font-size: 64px; }
+body.text-large .ex-title .name { font-size: 34px; }
+body.text-large .ex-meta { font-size: 19px; }
+body.text-large .phase { font-size: 26px; letter-spacing: .2em; min-height: 34px; }
+body.text-large .sub { font-size: 23px; min-height: 62px; line-height: 1.5; }
+body.text-large .main-btn { font-size: 30px; padding: 30px; }
+body.text-large .foot button { font-size: 18px; padding: 10px 14px; }
+body.text-large header h1 { font-size: 18px; }
+body.text-large .dots i { width: 13px; height: 13px; }
+body.text-large .dots button { padding: 9px 6px; }
+body.text-large .icon-btn { font-size: 26px; }
+body.text-large .help-btn { width: 30px; height: 30px; font-size: 17px; border-width: 2px; }
+body.text-large .howto { font-size: 18px; max-width: 100%; }
+body.text-large .howto.open { max-height: 760px; }
 
-body.text-large .sheet h2 { font-size: 18px; }
+/* シート類は手に持って読むので、上げ幅は控えめにする */
+body.text-large .sheet h2 { font-size: 19px; }
 body.text-large .row .label { font-size: 15px; flex-basis: 4.6em; }
 body.text-large .seg button { font-size: 16px; }
 body.text-large .seg button small { font-size: 12px; }
