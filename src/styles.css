@@ -277,3 +277,59 @@
 }
 .howto-video[hidden] { display: none; }
 .howto-text { margin: 0; }
+
+/* ---- 初回の文字サイズ選択 ---- */
+.first-run {
+  position: fixed; inset: 0; z-index: 30;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.first-run[hidden] { display: none; }
+.first-run-inner { width: 100%; max-width: 360px; }
+.first-run h2 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.first-run .note { margin-bottom: 22px; }
+.size-choice {
+  display: block; width: 100%; margin-bottom: 12px;
+  background: var(--surface); color: var(--text);
+  border-radius: 14px; padding: 18px; text-align: left;
+}
+.size-choice:active { background: var(--ember-dim); }
+.size-choice b { display: block; font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.size-choice span { font-size: 13px; color: var(--text-dim); }
+.size-choice.large b { font-size: 27px; }
+.size-choice.large span { font-size: 17px; }
+
+/* ---- 大きい文字 ---- */
+/* 数字（92px）はもともと十分大きいので触らない。読みづらいのは小さい字のほう。 */
+body.text-large .ex-title .name { font-size: 28px; }
+body.text-large .ex-meta { font-size: 15px; }
+body.text-large .howto { font-size: 16px; }
+body.text-large .howto.open { max-height: 680px; }
+body.text-large .phase { font-size: 18px; }
+body.text-large .sub { font-size: 18px; min-height: 48px; }
+body.text-large .main-btn { font-size: 24px; padding: 26px; }
+body.text-large .foot button { font-size: 16px; }
+body.text-large header h1 { font-size: 17px; }
+body.text-large .dots i { width: 11px; height: 11px; }
+body.text-large .icon-btn { font-size: 23px; }
+body.text-large .help-btn { width: 27px; height: 27px; font-size: 15px; }
+
+body.text-large .sheet h2 { font-size: 18px; }
+body.text-large .row .label { font-size: 15px; flex-basis: 4.6em; }
+body.text-large .seg button { font-size: 16px; }
+body.text-large .seg button small { font-size: 12px; }
+body.text-large .stepper .week-disp { font-size: 16px; }
+body.text-large .stepper button { font-size: 21px; }
+body.text-large .rec-day, body.text-large .export-title { font-size: 15px; }
+body.text-large .rec-row { font-size: 17px; }
+body.text-large .rec-row .n { font-size: 15px; }
+body.text-large .rec-row .r { font-size: 14px; }
+body.text-large .note { font-size: 14px; }
+body.text-large .empty { font-size: 16px; }
+body.text-large .body-grid label { font-size: 14px; }
+body.text-large .body-grid input { font-size: 19px; }
+body.text-large .btn-row button { font-size: 16px; }
+body.text-large .msg { font-size: 15px; }
+body.text-large .scan-status { font-size: 16px; }
+body.text-large .scan-chip { font-size: 15px; }
