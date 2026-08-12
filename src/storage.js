@@ -1,5 +1,7 @@
 // localStorage への保存と読み出し。DOM には触らない。
 
+import { DEFAULT_FOODS, MAX_FOODS } from "./foods.js";
+
 // ---- 週 ----
 const WEEK_KEY = "torobi.week";
 
@@ -150,6 +152,108 @@ export function autoDay() {
   if (last) return last.date === todayKey() ? last.day : (last.day === "mon" ? "thu" : "mon");
   const d = new Date().getDay();
   return (d >= 1 && d <= 3) ? "mon" : "thu";
+}
+
+// ---- 体の情報（食事の目標を出すために使う）----
+// 体重と体脂肪率は記録（body）から拾うので、ここには持たない。
+const PROFILE_KEY = "torobi.profile";
+
+const PROFILE_DEFAULT = {
+  sex: null,            // "male" | "female"
+  birthYear: null,
+  height: null,         // cm
+  activity: "light",
+  pace: "normal",
+  pregnant: false,
+  proteinOverride: null,
+};
+
+export function loadProfile() {
+  try {
+    const v = JSON.parse(localStorage.getItem(PROFILE_KEY));
+    return v && typeof v === "object" ? { ...PROFILE_DEFAULT, ...v } : { ...PROFILE_DEFAULT };
+  } catch (e) { return { ...PROFILE_DEFAULT }; }
+}
+
+export function saveProfile(patch) {
+  const next = { ...loadProfile(), ...patch };
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(next)); }
+  catch (e) { /* 保存できない環境でも画面は動く */ }
+  return next;
+}
+
+/** 一度でも体の情報を入れたか（食事シートの初期表示を分ける） */
+export const hasProfile = p => !!(p.sex && p.birthYear && p.height);
+
+// ---- タンパク質の記録 ----
+// { "2026-08-12": [{ n: "卵", g: 6 }, ...] }
+const PROTEIN_KEY = "torobi.protein";
+
+export function loadProteinLog() {
+  try {
+    const v = JSON.parse(localStorage.getItem(PROTEIN_KEY));
+    return v && typeof v === "object" ? v : {};
+  } catch (e) { return {}; }
+}
+
+function saveProteinLog(log) {
+  try { localStorage.setItem(PROTEIN_KEY, JSON.stringify(log)); }
+  catch (e) { /* 保存できない環境でも画面は動く */ }
+}
+
+export const loadProteinDay = (date = todayKey()) => loadProteinLog()[date] || [];
+
+export function addProtein(item, date = todayKey()) {
+  const log = loadProteinLog();
+  log[date] = [...(log[date] || []), { n: item.n, g: item.g }];
+  saveProteinLog(log);
+  return log[date];
+}
+
+/** 末尾から数えて i 番目を消す（画面の並びと合わせる） */
+export function removeProteinAt(i, date = todayKey()) {
+  const log = loadProteinLog();
+  const list = log[date] || [];
+  if (i < 0 || i >= list.length) return list;
+  list.splice(i, 1);
+  list.length ? log[date] = list : delete log[date];
+  saveProteinLog(log);
+  return list;
+}
+
+export function clearProtein(date = todayKey()) {
+  const log = loadProteinLog();
+  delete log[date];
+  saveProteinLog(log);
+}
+
+/** CSV から戻すときに使う。すでにある日は上書きしない。 */
+export function mergeProteinLog(days) {
+  const log = loadProteinLog();
+  let added = 0;
+  for (const [date, list] of Object.entries(days || {})) {
+    if (log[date] || !list.length) continue;
+    log[date] = list;
+    added++;
+  }
+  saveProteinLog(log);
+  return added;
+}
+
+// ---- タンパク質のボタン ----
+const FOODS_KEY = "torobi.foods";
+
+export function loadFoods() {
+  try {
+    const v = JSON.parse(localStorage.getItem(FOODS_KEY));
+    if (Array.isArray(v) && v.length) return v;
+  } catch (e) { /* 壊れた保存値は初期値に戻す */ }
+  return DEFAULT_FOODS.slice();
+}
+
+export function saveFoods(list) {
+  try { localStorage.setItem(FOODS_KEY, JSON.stringify(list.slice(0, MAX_FOODS))); }
+  catch (e) { /* 保存できない環境でも画面は動く */ }
 }
 
 // ---- 文字の大きさ ----

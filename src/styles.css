@@ -261,6 +261,81 @@
 }
 .scan-chip.done { background: var(--ember-dim); color: var(--text); }
 
+/* ---- 食事 ---- */
+.protein-head { display: flex; align-items: baseline; gap: 6px; justify-content: center; padding: 2px 0 10px; }
+.protein-head .now {
+  font-size: 46px; font-weight: 200; line-height: 1;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+}
+.protein-head .now.hit { color: var(--green); }
+.protein-head .goal { font-size: 14px; color: var(--text-dim); }
+.bar { height: 6px; border-radius: 3px; background: var(--surface); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--ember); transition: width .25s ease, background .25s; }
+.bar i.hit { background: var(--green); }
+
+.food-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0 8px; }
+.food-grid button {
+  background: var(--surface); color: var(--text);
+  border-radius: 10px; padding: 10px 4px; font-size: 12px; font-weight: 600;
+  line-height: 1.3; min-width: 0;
+}
+.food-grid button:active { background: var(--ember-dim); }
+.food-grid button small { display: block; font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+.free-row { display: flex; gap: 8px; margin-top: 6px; }
+.free-row input {
+  flex: 1; min-width: 0; border: 0; border-radius: 10px;
+  background: var(--surface); color: var(--text);
+  font-size: 16px; font-family: inherit; padding: 11px 10px;
+}
+.free-row input:focus { outline: 2px solid var(--ember-dim); }
+.free-row button {
+  flex: 0 0 auto; border-radius: 10px; padding: 11px 14px;
+  background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600;
+}
+.free-row button:active { background: var(--ember-dim); }
+
+.tally { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.tally button {
+  font-size: 12px; padding: 6px 9px; border-radius: 8px;
+  background: var(--surface); color: var(--text-dim);
+}
+.tally button:active { background: var(--ember-dim); color: var(--text); }
+.tally .empty-note { font-size: 12px; color: var(--text-dim); padding: 2px; }
+
+.target-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.target-grid div {
+  background: var(--surface); border-radius: 10px; padding: 10px 4px; text-align: center;
+}
+.target-grid .k { font-size: 10px; color: var(--text-dim); display: block; }
+.target-grid .v { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.target-grid .u { font-size: 10px; color: var(--text-dim); }
+
+.field {
+  flex: 1; min-width: 0; border: 0; border-radius: 10px;
+  background: var(--surface); color: var(--text);
+  font-size: 16px; font-family: inherit; font-variant-numeric: tabular-nums;
+  padding: 11px 10px; text-align: center;
+}
+.field:focus { outline: 2px solid var(--ember-dim); }
+.check { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--text-dim); padding: 6px 2px 2px; }
+.check input { width: 20px; height: 20px; accent-color: var(--ember); }
+
+.guard {
+  font-size: 12px; line-height: 1.7; border-radius: 10px;
+  padding: 11px 12px; margin-bottom: 8px;
+  background: var(--surface); color: var(--text-dim);
+  border-left: 3px solid var(--ember-dim);
+}
+.guard.block { border-left-color: var(--ember); color: var(--text); }
+
+.food-edit { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.food-edit button {
+  font-size: 12px; padding: 6px 9px; border-radius: 8px;
+  background: var(--surface); color: var(--text-dim);
+}
+.food-edit button:active { background: var(--ember-dim); color: var(--text); }
+
 /* ---- 音を消したときの合図（画面全体の点滅） ---- */
 .cue-flash {
   position: fixed; inset: 0; z-index: 20; pointer-events: none;
@@ -339,3 +414,14 @@ body.text-large .btn-row button { font-size: 16px; }
 body.text-large .msg { font-size: 15px; }
 body.text-large .scan-status { font-size: 16px; }
 body.text-large .scan-chip { font-size: 15px; }
+body.text-large .protein-head .now { font-size: 62px; }
+body.text-large .protein-head .goal { font-size: 18px; }
+body.text-large .food-grid button { font-size: 15px; }
+body.text-large .food-grid button small { font-size: 13px; }
+body.text-large .free-row input, body.text-large .free-row button { font-size: 17px; }
+body.text-large .tally button, body.text-large .food-edit button { font-size: 15px; }
+body.text-large .target-grid .k, body.text-large .target-grid .u { font-size: 13px; }
+body.text-large .target-grid .v { font-size: 21px; }
+body.text-large .field { font-size: 18px; }
+body.text-large .check { font-size: 16px; }
+body.text-large .guard { font-size: 15px; }

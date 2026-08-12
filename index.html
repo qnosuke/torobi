@@ -41,6 +41,7 @@
 
   <div class="foot">
     <button id="openRecord">記録</button>
+    <button id="openMeal">食事</button>
     <button id="extraSetBtn" class="hide">もう1セット</button>
   </div>
 </div>
@@ -108,6 +109,7 @@
         テンポは週と種目から自動で決まります（単関節は第7週から4秒かけて下ろす）。メニューは前回やった方の逆が選ばれます。<br><br>
         1セット目は限界の直前まで。止めた秒数の8割が、次のセットのカウントダウンになります。片側種目は左→右で1セットです。<br><br>
         やり方は種目名の横の <b>?</b> から。種目の移動は左右スワイプ、または上のドットをタップ。<br><br>
+        目標を動かすのは食事のほうです。<b>食事</b>から、体組成に合わせた1日の目安が出ます。数えるのはタンパク質だけ。カロリーは体重の推移が検算します。<br><br>
         音が鳴らないときは、本体の音量を上げてから「鳴らす」を押し直してください（確認音が鳴ります）。<br><br>
         音を「消す」にすると、テンポは画面の点滅で伝えます（下ろす＝暗い点滅、上げる＝明るい点滅）。振動が使える端末では振動も出ますが、iPhoneのSafariは振動に対応していないため、画面が主な合図になります。
       </p>
@@ -138,6 +140,100 @@
       <div class="btn-row">
         <button id="resetExBtn" class="danger">今の種目をやり直す</button>
       </div>
+    </section>
+  </div>
+</div>
+
+<div class="sheet" id="mealSheet">
+  <div class="sheet-inner">
+    <div class="grab"></div>
+    <h2>食事</h2>
+
+    <section>
+      <div class="rec-day">今日のタンパク質</div>
+      <div class="protein-head">
+        <span class="now" id="proteinNow">0</span>
+        <span class="goal" id="proteinGoal">g</span>
+      </div>
+      <div class="bar"><i id="proteinBar"></i></div>
+      <div class="food-grid" id="foodGrid"></div>
+      <div class="free-row">
+        <input type="number" inputmode="numeric" id="freeG" placeholder="g" min="1" max="100">
+        <button id="freeAdd">その他を足す</button>
+      </div>
+      <div class="tally" id="proteinItems"></div>
+    </section>
+
+    <section>
+      <div class="rec-day">1日の目安</div>
+      <div class="target-grid" id="targetGrid"></div>
+      <p class="note" id="targetNote"></p>
+    </section>
+
+    <section>
+      <div class="rec-day">ペース</div>
+      <p class="note" id="paceText"></p>
+    </section>
+
+    <section id="guardBox" hidden></section>
+
+    <section>
+      <div class="rec-day">体の情報</div>
+      <div class="row">
+        <span class="label">性別</span>
+        <div class="seg" id="sexSeg">
+          <button data-sex="female">女性</button>
+          <button data-sex="male">男性</button>
+        </div>
+      </div>
+      <div class="row">
+        <span class="label">生まれ年</span>
+        <input class="field" type="number" inputmode="numeric" id="birthYear" placeholder="1980" min="1900" max="2100">
+      </div>
+      <div class="row">
+        <span class="label">身長</span>
+        <input class="field" type="number" inputmode="decimal" id="height" placeholder="cm" min="100" max="230" step="0.5">
+      </div>
+      <div class="row">
+        <span class="label">活動量</span>
+        <div class="seg" id="activitySeg"></div>
+      </div>
+      <div class="row">
+        <span class="label">ペース</span>
+        <div class="seg" id="paceSeg"></div>
+      </div>
+      <div class="row">
+        <span class="label">目標P</span>
+        <input class="field" type="number" inputmode="numeric" id="proteinOverride" placeholder="自動" min="20" max="400">
+      </div>
+      <label class="check"><input type="checkbox" id="pregnant"><span>妊娠中・授乳中</span></label>
+      <p class="note">
+        体重と体脂肪率は「記録」の朝の体組成から自動で拾います。体脂肪率が入っていると、
+        基礎代謝とタンパク質の計算が除脂肪体重ベースになり精度が上がります。<br>
+        「目標P」を空にすると自動計算に戻ります。
+      </p>
+    </section>
+
+    <section>
+      <div class="rec-day">ボタンを編集</div>
+      <div class="food-edit" id="foodEdit"></div>
+      <div class="free-row">
+        <input type="text" id="newFoodName" placeholder="名前" maxlength="12">
+        <input type="number" inputmode="numeric" id="newFoodG" placeholder="g" min="1" max="100">
+        <button id="foodAdd">追加</button>
+      </div>
+      <div class="msg" id="foodMsg"></div>
+      <div class="btn-row" style="margin-top:6px">
+        <button id="foodReset">はじめの並びに戻す</button>
+      </div>
+    </section>
+
+    <section>
+      <p class="note">
+        数えるのはタンパク質だけです。カロリーは体重の推移が検算してくれるので、記録しません。<br><br>
+        ここに出る数値は身長・体重・体脂肪率からの推定で、個人差が1〜2割あります。<strong>最初の数字は出発点で、実際に合わせるのは体重の推移のほうです。</strong>2〜3週ごとの判定に従って調整してください。<br><br>
+        持病がある場合、薬を飲んでいる場合、妊娠中・授乳中の場合、18歳未満の場合は、この目安を使わず医師や管理栄養士に相談してください。極端な食事制限は体調を崩します。
+      </p>
     </section>
   </div>
 </div>
