@@ -16,6 +16,9 @@ const ATYPICAL_COST = 0.75; // 現実の人間として不自然な割り当て�
 // BMI 62.7 等）。並び順だけでは対称で区別できない誤解釈を弾く決め手になる
 const START_BIAS = 0.01; // 同点なら周回の早い位置から始まる整列を優先
 
+// 1フレームの割り込みを読み違えとして許すのに必要な、割り込み前の連続回数
+const FORGIVE_AFTER = 2;
+
 /**
  * 2つの読み取り文字列が同じ表示の読み違えとしてあり得るか。
  * 7セグ誤読は「端の桁が欠ける」（64.2→4.2）か「1画面内のセグメント
@@ -65,6 +68,8 @@ export class CaptureSession {
     this.stableFrames = stableFrames;
     this.candidateText = null;
     this.candidateCount = 0;
+    this.prevText = null;   // 1つ前の候補（1フレームの割り込みから戻れるように覚えておく）
+    this.prevCount = 0;
     this.runs = []; // { text, weight, matches: number[], pos: number|null }
     this.activated = false; // 小数付きの測定値を見たか
     this.results = {};
@@ -83,7 +88,19 @@ export class CaptureSession {
     }
     if (text === this.candidateText) {
       this.candidateCount++;
+    } else if (text === this.prevText && this.prevCount >= FORGIVE_AFTER) {
+      // 数えが進んでいた値に、別の値を1フレーム挟んで戻ってきた＝その1枚は読み違え。
+      // 桁が多い表示ほど「どこか1桁だけ違う」が起きやすく、律儀に数え直していると
+      // stableFrames 回続かない（4桁の基礎代謝だけ確定しない主因）。数えを引き継ぐ。
+      // 定着前（1フレームだけ）の値には引き継がせないので、本当に揺れている
+      // 表示（交互に別の値が出続ける）は今までどおり確定しない。
+      this.candidateText = text;
+      this.candidateCount = this.prevCount + 1;
+      this.prevText = null;
+      this.prevCount = 0;
     } else {
+      this.prevText = this.candidateText;
+      this.prevCount = this.candidateCount;
       this.candidateText = text;
       this.candidateCount = 1;
     }

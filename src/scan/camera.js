@@ -8,8 +8,10 @@ export async function startCamera(videoEl) {
   const stream = await navigator.mediaDevices.getUserMedia({
     video: {
       facingMode: { ideal: 'environment' },
-      width: { ideal: 1280 },
-      height: { ideal: 720 },
+      // 液晶を切り出さずフレーム全体から読むぶん、数字に乗る画素が少なくなる。
+      // 端末が出せるなら高い方をもらい、認識前の縮小で必要なだけ落とす。
+      width: { ideal: 1920 },
+      height: { ideal: 1080 },
     },
     audio: false,
   });
@@ -36,9 +38,15 @@ export function stopCamera() {
  *
  * @param {HTMLVideoElement} videoEl
  * @param {HTMLCanvasElement} canvas 作業用キャンバス（使い回す）
- * @param {number} maxWidth 縮小後の最大幅。960は実機フレームで検証済みの解像度
+ * 縮小しすぎると桁に乗る画素が減り、桁数の多い表示から先に読めなくなる
+ * （4桁の基礎代謝だけ確定しない）。1280 は実機フレームで1フレームあたり
+ * 40ms 前後、ブレたフレームでも 100ms 未満で、10fps の間隔に収まる上限。
+ *
+ * @param {HTMLVideoElement} videoEl
+ * @param {HTMLCanvasElement} canvas 作業用キャンバス（使い回す）
+ * @param {number} maxWidth 縮小後の最大幅
  */
-export function grabFrame(videoEl, canvas, maxWidth = 960) {
+export function grabFrame(videoEl, canvas, maxWidth = 1280) {
   const vw = videoEl.videoWidth;
   const vh = videoEl.videoHeight;
   if (!vw || !vh) return null;

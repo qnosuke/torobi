@@ -58,6 +58,48 @@ describe('CaptureSession', () => {
     expect(feedStable(s, '22')).toBe('bodyAge');
   });
 
+  it('1フレームだけ別の値が混じっても数え直さない（桁の多い表示の1桁誤読）', () => {
+    // 基礎代謝のような4桁表示は「どこか1桁だけ違う」誤読が起きやすい。
+    // そのたびに数え直すと stableFrames 回続かず、いつまでも確定しない。
+    const s = new CaptureSession({ stableFrames: 3 });
+    feedStable(s, '62.7');
+    feedStable(s, '15.8');
+    feedStable(s, '4');
+    feedStable(s, '39.9');
+    feedStable(s, '22');
+    const seq = ['1545', '1545', '1645', '1545', '1545'];
+    let captured = null;
+    for (const t of seq) {
+      const r = s.feed(t);
+      if (r.captured) captured = r.captured;
+    }
+    expect(captured).toBe('basalMetabolism');
+    expect(s.getResults().basalMetabolism).toBe('1545');
+  });
+
+  it('画面が切り替わったら1フレーム目から数え始める（割り込み扱いで捨てない）', () => {
+    const s = new CaptureSession({ stableFrames: 3 });
+    feedStable(s, '62.7'); // 体重が長く定着している状態から
+    let captured = null;
+    for (const t of ['15.8', '15.8', '15.8']) {
+      const r = s.feed(t);
+      if (r.captured) captured = r.captured;
+    }
+    expect(captured).toBe('bodyFat');
+  });
+
+  it('定着前の値には数えを引き継がせない（本当に揺れている表示は確定しない）', () => {
+    // 1フレームずつ3つの値が回り続けるようなフレームでは、どれも確定してはいけない
+    const s = new CaptureSession({ stableFrames: 3 });
+    feedStable(s, '62.7');
+    for (let i = 0; i < 12; i++) {
+      s.feed('1545');
+      s.feed('1645');
+      s.feed('1445');
+    }
+    expect(s.getResults().basalMetabolism).toBeUndefined();
+  });
+
   it('揺れている値（連続しない）は確定しない', () => {
     const s = new CaptureSession({ stableFrames: 3 });
     for (let i = 0; i < 10; i++) {
