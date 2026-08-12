@@ -34,6 +34,13 @@ export function createScanSheet({ onDone, onClose }) {
     }).join("");
   }
 
+  /** 何が残っているかを出す。1〜2項目で止まったとき、どこに寄せればよいか分かる */
+  function remaining(results) {
+    const missing = METRICS.filter(m => !results[m.key]).map(m => m.label);
+    if (missing.length === 0) return "";
+    return missing.length <= 2 ? `残り ${missing.join("・")}` : `残り ${missing.length}項目`;
+  }
+
   function stopLoop() {
     running = false;
     clearTimeout(timer);
@@ -58,8 +65,10 @@ export function createScanSheet({ onDone, onClose }) {
     if (frame) {
       const { text } = recognizeFrame(frame);
       const { captured, complete } = session.feed(text);
-      if (text) statusEl.textContent = `読み取り中: ${text}`;
-      if (captured) renderChips(session.getResults());
+      const results = session.getResults();
+      statusEl.textContent = [text ? `読み取り中: ${text}` : "", remaining(results)]
+        .filter(Boolean).join("　／　");
+      if (captured) renderChips(results);
       if (complete) {
         statusEl.textContent = "7項目すべて読み取りました";
         if (navigator.vibrate) navigator.vibrate(200);

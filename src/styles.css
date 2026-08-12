@@ -252,6 +252,14 @@
   border-radius: 14px; overflow: hidden;
 }
 .camera-wrap video { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* 近さの目安だけを示す枠。読み取りはフレーム全体で行うので、
+   ここに合わせる必要はない（合わせさせると切り出しと同じ失敗が戻る）。 */
+.scan-guide {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 62%; aspect-ratio: 5 / 2;
+  border: 2px dashed rgba(255, 122, 47, .55); border-radius: 8px;
+  pointer-events: none;
+}
 .scan-status { font-size: 13px; color: var(--text-dim); min-height: 20px; text-align: center; }
 .scan-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
 .scan-chip {
