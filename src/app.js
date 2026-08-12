@@ -9,7 +9,7 @@ import {
 import {
   loadWeek, saveWeek, loadLog, recordSet, clearRecordedExercise,
   saveBody, loadTodayBody, lastTimeSeconds, autoDay, todayKey, SIDE_JA,
-  mergeLog, loadTextSize, saveTextSize,
+  mergeLog, loadTextSize, saveTextSize, loadProteinLog, mergeProteinLog,
 } from "./storage.js";
 import { parseCsvText } from "./csvImport.js";
 import { buildTodayText, buildCsv } from "./exportData.js";
@@ -20,6 +20,7 @@ import {
 import { initCues, cueDown, cueUp, cuePrep, cueStep, cueAlarm } from "./cues.js";
 import { METRICS } from "./scan/metrics.js";
 import { createScanSheet } from "./scan/scanSheet.js";
+import { createMealSheet } from "./mealSheet.js";
 
 // Service Worker 登録（vite-plugin-pwa。dev では no-op）
 if (import.meta.env.PROD) {
@@ -102,6 +103,7 @@ const weekDisp = $("weekDisp"), daySeg = $("daySeg"), prepSeg = $("prepSeg"), so
 const exportMsg = $("exportMsg"), recToday = $("recToday");
 const importBtn = $("importBtn"), importFile = $("importFile"), importMsg = $("importMsg");
 const sheetBg = $("sheetBg"), settingsSheet = $("settingsSheet"), recordSheet = $("recordSheet");
+const mealSheet = $("mealSheet");
 const bodyGrid = $("bodyGrid"), textSeg = $("textSeg"), firstRun = $("firstRun");
 
 // ---- テンポは週と種目から自動 ----
@@ -413,7 +415,7 @@ async function copyText(text) {
 }
 
 async function exportCsv() {
-  const csv = buildCsv(loadLog());
+  const csv = buildCsv(loadLog(), loadProteinLog());
   if (!csv) { flash("まだ書き出す記録がありません", false); return; }
   const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
   const file = new File([blob], `torobi-${todayKey()}.csv`, { type: "text/csv" });
@@ -453,15 +455,17 @@ function renderRecord() {
 }
 
 // ---- sheets ----
+const meal = createMealSheet();
+
 function openSheet(el) {
   if (el === recordSheet) renderRecord();
+  if (el === mealSheet) meal.render();
   sheetBg.classList.add("open");
   el.classList.add("open");
 }
 function closeSheets() {
   sheetBg.classList.remove("open");
-  settingsSheet.classList.remove("open");
-  recordSheet.classList.remove("open");
+  [settingsSheet, recordSheet, mealSheet].forEach(s => s.classList.remove("open"));
 }
 
 // ---- events ----
@@ -527,11 +531,12 @@ helpBtn.addEventListener("click", () => {
 
 $("openSettings").addEventListener("click", () => openSheet(settingsSheet));
 $("openRecord").addEventListener("click", () => openSheet(recordSheet));
+$("openMeal").addEventListener("click", () => openSheet(mealSheet));
 sheetBg.addEventListener("click", closeSheets);
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheets(); });
 
 // 下方向スワイプで閉じる（一番上までスクロールしているときだけ）
-[settingsSheet, recordSheet].forEach(sheet => {
+[settingsSheet, recordSheet, mealSheet].forEach(sheet => {
   sheet.querySelector(".grab").addEventListener("click", closeSheets);
   let y0 = null;
   sheet.addEventListener("touchstart", e => {
@@ -645,7 +650,7 @@ $("scanBtn").addEventListener("click", () => {
 });
 
 $("copyBtn").addEventListener("click", async () => {
-  const text = buildTodayText(loadLog());
+  const text = buildTodayText(loadLog(), todayKey(), loadProteinLog());
   if (!text) { flash("今日の記録がまだありません", false); return; }
   const ok = await copyText(text);
   flash(ok ? "今日の記録をコピーしました" : "コピーできませんでした", ok);
@@ -713,6 +718,7 @@ importFile.addEventListener("change", async () => {
     return;
   }
   const { added, kept } = mergeLog(parsed.days);
+  mergeProteinLog(parsed.protein);
   showImportMsg(
     added > 0
       ? `${added}日分を戻しました${kept > 0 ? `（${kept}日分はすでにあるので残しました）` : ""}`
@@ -723,6 +729,7 @@ importFile.addEventListener("change", async () => {
   autoTempo();
   renderIdle();
   renderBodyInputs();
+  meal.render();
 });
 
 // ---- init ----

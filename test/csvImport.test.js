@@ -45,10 +45,55 @@ describe('書き出したCSVを読み戻す', () => {
   it('行数を返す', () => {
     expect(parseCsvText(buildCsv(log)).rows).toBe(4);
   });
+
+  it('タンパク質も往復する', () => {
+    const protein = { '2026-08-03': [{ n: '卵', g: 6 }, { n: '納豆 1P', g: 8 }] };
+    const parsed = parseCsvText(buildCsv(log, protein));
+    expect(parsed.ok).toBe(true);
+    // CSVには1日の合計しか残らないので、戻すときは1件にまとまる
+    expect(parsed.protein).toEqual({ '2026-08-03': [{ n: 'まとめて', g: 14 }] });
+  });
+
+  it('トレーニングをしていない日（種目が空の行）も往復する', () => {
+    const onlyBody = { '2026-08-04': { week: 2, day: 'mon', sets: [], body: { weight: '61.5' } } };
+    const parsed = parseCsvText(buildCsv(onlyBody));
+    expect(parsed.ok).toBe(true);
+    expect(parsed.days).toEqual(onlyBody);
+  });
+
+  it('週とメニューが空の行も読める（タンパク質だけの日）', () => {
+    const parsed = parseCsvText(buildCsv({}, { '2026-08-05': [{ n: '卵', g: 6 }] }));
+    expect(parsed.ok).toBe(true);
+    expect(parsed.days['2026-08-05']).toEqual({ week: null, day: null, sets: [], body: {} });
+    expect(parsed.protein['2026-08-05']).toEqual([{ n: 'まとめて', g: 6 }]);
+  });
+
+  it('同じ日に体組成だけの行と種目の行が混ざっても週とメニューを失わない', () => {
+    const mixed = `${head}
+2026-08-03,,,,,,,,,61.8,,,,,,,
+2026-08-03,1,腕,腕立て伏せ,押す,1,,42,10,,,,,,,,`;
+    const parsed = parseCsvText(mixed);
+    expect(parsed.ok).toBe(true);
+    expect(parsed.days['2026-08-03'].week).toBe(1);
+    expect(parsed.days['2026-08-03'].day).toBe('thu');
+    expect(parsed.days['2026-08-03'].body.weight).toBe('61.8');
+  });
+
+  it('種目が空でも週が範囲外なら弾く', () => {
+    const r = parseCsvText(`${head}\n2026-08-03,99,腕,,,,,,,61.8,,,,,,,`);
+    expect(r.ok).toBe(false);
+    expect(r.error.reason).toContain('週');
+  });
+
+  it('タンパク質が数値でなければ弾く', () => {
+    const r = parseCsvText(`${head}\n2026-08-03,1,腕,腕立て伏せ,押す,1,,42,10,,,,,,,,たくさん`);
+    expect(r.ok).toBe(false);
+    expect(r.error.reason).toContain('タンパク質');
+  });
 });
 
 describe('壊れたCSVは取り込まない', () => {
-  const row = '2026-08-03,1,腕,腕立て伏せ,押す,1,,42,10,,,,,,,';
+  const row = '2026-08-03,1,腕,腕立て伏せ,押す,1,,42,10,,,,,,,,';
   const bad = (text, line) => {
     const r = parseCsvText(text);
     expect(r.ok).toBe(false);
@@ -69,31 +114,31 @@ describe('壊れたCSVは取り込まない', () => {
   });
 
   it('ありえない日付', () => {
-    expect(bad(`${head}\n2026-02-30,1,腕,腕立て伏せ,押す,1,,42,10,,,,,,,`, 2)).toContain('日付');
-    expect(bad(`${head}\n2026/08/03,1,腕,腕立て伏せ,押す,1,,42,10,,,,,,,`, 2)).toContain('日付');
+    expect(bad(`${head}\n2026-02-30,1,腕,腕立て伏せ,押す,1,,42,10,,,,,,,,`, 2)).toContain('日付');
+    expect(bad(`${head}\n2026/08/03,1,腕,腕立て伏せ,押す,1,,42,10,,,,,,,,`, 2)).toContain('日付');
   });
 
   it('週の範囲外', () => {
-    expect(bad(`${head}\n2026-08-03,13,腕,腕立て伏せ,押す,1,,42,10,,,,,,,`, 2)).toContain('週');
+    expect(bad(`${head}\n2026-08-03,13,腕,腕立て伏せ,押す,1,,42,10,,,,,,,,`, 2)).toContain('週');
   });
 
   it('メニューが肩でも腕でもない', () => {
-    expect(bad(`${head}\n2026-08-03,1,脚,腕立て伏せ,押す,1,,42,10,,,,,,,`, 2)).toContain('メニュー');
+    expect(bad(`${head}\n2026-08-03,1,脚,腕立て伏せ,押す,1,,42,10,,,,,,,,`, 2)).toContain('メニュー');
   });
 
   it('左右が不正', () => {
-    expect(bad(`${head}\n2026-08-03,1,腕,腕立て伏せ,押す,1,両,42,10,,,,,,,`, 2)).toContain('左右');
+    expect(bad(`${head}\n2026-08-03,1,腕,腕立て伏せ,押す,1,両,42,10,,,,,,,,`, 2)).toContain('左右');
   });
 
   it('秒数が数値でない', () => {
-    expect(bad(`${head}\n2026-08-03,1,腕,腕立て伏せ,押す,1,,約42,10,,,,,,,`, 2)).toContain('秒数');
+    expect(bad(`${head}\n2026-08-03,1,腕,腕立て伏せ,押す,1,,約42,10,,,,,,,,`, 2)).toContain('秒数');
   });
 
   it('体組成が数値でない', () => {
-    expect(bad(`${head}\n2026-08-03,1,腕,腕立て伏せ,押す,1,,42,10,えらい,,,,,,`, 2)).toContain('体重');
+    expect(bad(`${head}\n2026-08-03,1,腕,腕立て伏せ,押す,1,,42,10,えらい,,,,,,,`, 2)).toContain('体重');
   });
 
   it('2行目が正しくても3行目が不正なら取り込まない', () => {
-    expect(bad(`${head}\n${row}\n2026-08-04,1,腕,腕立て伏せ,押す,ゼロ,,42,10,,,,,,,`, 3)).toContain('セット');
+    expect(bad(`${head}\n${row}\n2026-08-04,1,腕,腕立て伏せ,押す,ゼロ,,42,10,,,,,,,,`, 3)).toContain('セット');
   });
 });

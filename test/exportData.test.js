@@ -40,16 +40,16 @@ describe('今日の記録テキスト', () => {
 describe('CSV', () => {
   const rows = buildCsv(log).split('\r\n');
 
-  it('見出しに体組成7項目が並ぶ', () => {
+  it('見出しに体組成7項目とタンパク質が並ぶ', () => {
     expect(rows[0]).toBe(
       '日付,週,メニュー,種目,枠,セット,左右,秒数,回数換算,' +
-      '体重,体脂肪率,内臓脂肪,骨格筋率,体年齢,基礎代謝,BMI'
+      '体重,体脂肪率,内臓脂肪,骨格筋率,体年齢,基礎代謝,BMI,タンパク質'
     );
   });
 
   it('1行=1セットで、種目ごとにセット順に並ぶ', () => {
     expect(rows).toHaveLength(6); // 見出し + 5セット
-    expect(rows[1]).toBe('2026-08-03,1,腕,膝つき腕立て伏せ,押す,1,,42,10,61.8,22.4,,33.8,,,21.9');
+    expect(rows[1]).toBe('2026-08-03,1,腕,膝つき腕立て伏せ,押す,1,,42,10,61.8,22.4,,33.8,,,21.9,');
     expect(rows[2].startsWith('2026-08-03,1,腕,膝つき腕立て伏せ,押す,2,,34,8')).toBe(true);
     expect(rows[3]).toContain('ワンハンドロー,引く,1,左,44');
     expect(rows[4]).toContain('ワンハンドロー,引く,1,右,41');
@@ -57,6 +57,27 @@ describe('CSV', () => {
 
   it('記録がなければ null', () => {
     expect(buildCsv({})).toBeNull();
+  });
+
+  it('その日のタンパク質の合計を各行に付ける', () => {
+    const csv = buildCsv(log, { '2026-08-03': [{ n: '卵', g: 6 }, { n: '納豆 1P', g: 8 }] });
+    expect(csv.split('\r\n')[1].endsWith(',21.9,14')).toBe(true);
+  });
+
+  it('トレーニングをしていない日も、体重があれば1行出す', () => {
+    const csv = buildCsv({ '2026-08-04': { week: 1, day: 'thu', sets: [], body: { weight: '61.5' } } });
+    const rows = csv.split('\r\n');
+    expect(rows).toHaveLength(2);
+    expect(rows[1]).toBe('2026-08-04,1,腕,,,,,,,61.5,,,,,,,');
+  });
+
+  it('タンパク質しか記録していない日も残す（週とメニューは空）', () => {
+    const csv = buildCsv({}, { '2026-08-05': [{ n: '卵', g: 6 }] });
+    expect(csv.split('\r\n')[1]).toBe('2026-08-05,,,,,,,,,,,,,,,,6');
+  });
+
+  it('体重もタンパク質もない日は出さない', () => {
+    expect(buildCsv({ '2026-08-04': { week: 1, day: 'thu', sets: [], body: {} } })).toBeNull();
   });
 });
 
