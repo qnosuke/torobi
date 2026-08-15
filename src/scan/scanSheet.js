@@ -8,9 +8,11 @@
 import { METRICS } from "./metrics.js";
 import { CaptureSession } from "./session.js";
 import { recognizeFrame } from "./sevenseg.js";
-import { startCamera, stopCamera, grabFrame } from "./camera.js";
+import { startCamera, stopCamera, grabFrame, grabGuideROI } from "./camera.js";
+import { pickReading } from "./pickReading.js";
 
-const INTERVAL_MS = 100; // 目標の間隔。処理が長引いたぶんは自動で間引く
+// 1フレームにつき枠の中と全体の2回読むので、間隔は広めに取る
+const INTERVAL_MS = 150;
 
 export function createScanSheet({ onDone, onClose }) {
   const $ = id => document.getElementById(id);
@@ -21,6 +23,8 @@ export function createScanSheet({ onDone, onClose }) {
   const startBtn = $("scanStart");
   const finishBtn = $("scanFinish");
   const closeBtn = $("scanClose");
+  const wrap = sheet.querySelector(".camera-wrap");
+  const guide = sheet.querySelector(".scan-guide");
   const workCanvas = document.createElement("canvas");
 
   let session = null;
@@ -57,13 +61,22 @@ export function createScanSheet({ onDone, onClose }) {
     if (Object.keys(results).length > 0) onDone(results);
   }
 
+  /** 枠の中（原寸に近い）と全体の両方を読み、確からしい方を返す */
+  function readFrame() {
+    const roi = grabGuideROI(video, wrap.getBoundingClientRect(), guide.getBoundingClientRect(), workCanvas);
+    const roiText = roi ? recognizeFrame(roi).text : null;
+    const frame = grabFrame(video, workCanvas);
+    if (!frame && !roi) return undefined;          // まだ映像が来ていない
+    const fullText = frame ? recognizeFrame(frame).text : null;
+    return pickReading(roiText, fullText);
+  }
+
   function tick() {
     if (!running) return;
     const started = performance.now();
 
-    const frame = grabFrame(video, workCanvas);
-    if (frame) {
-      const { text } = recognizeFrame(frame);
+    const text = readFrame();
+    if (text !== undefined) {
       const { captured, complete } = session.feed(text);
       const results = session.getResults();
       statusEl.textContent = [text ? `読み取り中: ${text}` : "", remaining(results)]

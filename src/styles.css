@@ -252,12 +252,13 @@
   border-radius: 14px; overflow: hidden;
 }
 .camera-wrap video { width: 100%; height: 100%; object-fit: contain; display: block; }
-/* 近さの目安だけを示す枠。読み取りはフレーム全体で行うので、
-   ここに合わせる必要はない（合わせさせると切り出しと同じ失敗が戻る）。 */
+/* ここに液晶を入れてもらう枠。中身を原寸で切り出して読むので、収まっていると
+   認識がいちばん良くなる。はみ出してもフレーム全体の読み取りが受け止める。 */
 .scan-guide {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: 62%; aspect-ratio: 5 / 2;
-  border: 2px dashed rgba(255, 122, 47, .55); border-radius: 8px;
+  border: 2px solid rgba(255, 122, 47, .75); border-radius: 8px;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .35);
   pointer-events: none;
 }
 .scan-status { font-size: 13px; color: var(--text-dim); min-height: 20px; text-align: center; }

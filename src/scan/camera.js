@@ -46,6 +46,47 @@ export function stopCamera() {
  * @param {HTMLCanvasElement} canvas 作業用キャンバス（使い回す）
  * @param {number} maxWidth 縮小後の最大幅
  */
+/**
+ * ガイド枠に対応する映像内の領域を、原寸に近い解像度で切り出す。
+ * video は object-fit: contain で表示されている前提で座標を変換する。
+ *
+ * 液晶が画面の半分を切ると、フレーム全体からの読み取りは成立しなくなる
+ * （背景の塊が桁の並びとして競合し、桁に乗る画素も減るため）。枠の中だけを
+ * 渡せば「ほぼ全部が液晶」の画像になり、認識の条件が大きく良くなる。
+ * ただし枠から桁がはみ出すと欠けて誤読するので、呼び出し側でフレーム全体の
+ * 読み取りと突き合わせて使う（pickReading）。
+ *
+ * 上限が全体より小さいのは、切り出した時点で液晶が画像の大半を占めており、
+ * 桁には十分な画素が乗るため。1フレームに2回読むので処理時間を抑える。
+ */
+export function grabGuideROI(videoEl, containerRect, guideRect, canvas, { margin = 1.2, maxWidth = 960 } = {}) {
+  const vw = videoEl.videoWidth;
+  const vh = videoEl.videoHeight;
+  if (!vw || !vh) return null;
+
+  const scale = Math.min(containerRect.width / vw, containerRect.height / vh); // contain
+  const letterX = (containerRect.width - vw * scale) / 2;
+  const letterY = (containerRect.height - vh * scale) / 2;
+
+  const cx = guideRect.left - containerRect.left + guideRect.width / 2;
+  const cy = guideRect.top - containerRect.top + guideRect.height / 2;
+  const w = guideRect.width * margin;
+  const h = guideRect.height * margin;
+
+  let sx = Math.max(0, (cx - w / 2 - letterX) / scale);
+  let sy = Math.max(0, (cy - h / 2 - letterY) / scale);
+  const sw = Math.min(w / scale, vw - sx);
+  const sh = Math.min(h / scale, vh - sy);
+  if (sw < 40 || sh < 20) return null;
+
+  const k = Math.min(1, maxWidth / sw);
+  canvas.width = Math.round(sw * k);
+  canvas.height = Math.round(sh * k);
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  return ctx.getImageData(0, 0, canvas.width, canvas.height);
+}
+
 export function grabFrame(videoEl, canvas, maxWidth = 1280) {
   const vw = videoEl.videoWidth;
   const vh = videoEl.videoHeight;
