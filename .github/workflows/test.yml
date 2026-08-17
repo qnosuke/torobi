@@ -1,0 +1,31 @@
+name: Test
+
+# main へのマージ前にテストを走らせる。
+# デプロイのワークフロー（pages.yml）でもテストしているが、あちらは main への
+# push でしか動かないので、壊れていることに気づくのがマージ後になってしまう。
+# こちらは PR に対して走るので、マージする前に赤が見える。
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 同じPRに続けて push したときは古い実行を打ち切る
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      # 型やimportの壊れはテストでは出ないことがあるので、ビルドも通す
+      - run: npm run build
