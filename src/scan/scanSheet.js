@@ -61,6 +61,19 @@ export function createScanSheet({ onDone, onClose }) {
     if (Object.keys(results).length > 0) onDone(results);
   }
 
+  /**
+   * カメラ枠を映像の縦横比に合わせる。
+   * 端末を縦に持つと映像も縦長で来るため、固定の 16:9 のままだと左右が黒帯になり、
+   * 映像が細い帯まで縮んでしまう。何を写しているか見えないので液晶を大きく
+   * 捉えられず、ガイド枠も映像の外にはみ出して切り出す範囲がずれる。
+   */
+  function fitCameraBox() {
+    const { videoWidth: w, videoHeight: h } = video;
+    if (w > 0 && h > 0) wrap.style.setProperty("--ar", String(w / h));
+  }
+  video.addEventListener("loadedmetadata", fitCameraBox);
+  video.addEventListener("resize", fitCameraBox);   // 端末の回転で縦横が入れ替わる
+
   /** 枠の中（原寸に近い）と全体の両方を読み、確からしい方を返す */
   function readFrame() {
     const roi = grabGuideROI(video, wrap.getBoundingClientRect(), guide.getBoundingClientRect(), workCanvas);
@@ -121,6 +134,7 @@ export function createScanSheet({ onDone, onClose }) {
       statusEl.textContent = "カメラ起動中…";
       try {
         await startCamera(video);
+        fitCameraBox();   // loadedmetadata を取り逃していても合わせる
         statusEl.textContent = "「読み取り開始」を押して体組成計に乗ってください";
       } catch (e) {
         statusEl.textContent = "カメラを起動できません。ブラウザの設定でカメラを許可してください";

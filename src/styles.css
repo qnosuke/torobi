@@ -246,17 +246,23 @@
 .scan-head { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; }
 .scan-head h2 { margin-bottom: 0; }
 /* 見えている範囲＝読み取っている範囲にする（contain で全体を表示） */
+/* 縦横比は映像が来た時点で JS が実際の値に差し替える。
+   端末を縦に持つとカメラも縦長で来るので、16:9 に固定すると左右が黒帯になり
+   映像が細い帯まで縮む（何を写しているか分からず、枠も映像とずれる）。 */
 .camera-wrap {
-  position: relative; margin: 12px 0;
-  aspect-ratio: 16 / 9; background: #000;
-  border-radius: 14px; overflow: hidden;
+  --ar: 1.7778;                       /* 映像が来たら JS が実際の比に差し替える */
+  position: relative; margin: 12px auto;
+  /* 高さの上限に収まる幅を選ぶ。こうすると黒帯が出ず、枠＝映像になる */
+  width: min(100%, calc(46vh * var(--ar)));
+  aspect-ratio: var(--ar); max-height: 46vh;
+  background: #000; border-radius: 14px; overflow: hidden;
 }
 .camera-wrap video { width: 100%; height: 100%; object-fit: contain; display: block; }
 /* ここに液晶を入れてもらう枠。中身を原寸で切り出して読むので、収まっていると
    認識がいちばん良くなる。はみ出してもフレーム全体の読み取りが受け止める。 */
 .scan-guide {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: 62%; aspect-ratio: 5 / 2;
+  width: 84%; max-height: 70%; aspect-ratio: 5 / 2;
   border: 2px solid rgba(255, 122, 47, .75); border-radius: 8px;
   box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .35);
   pointer-events: none;
