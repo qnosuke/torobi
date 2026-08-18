@@ -8,9 +8,11 @@
 import { METRICS } from "./metrics.js";
 import { CaptureSession } from "./session.js";
 import { recognizeFrame } from "./sevenseg.js";
-import { startCamera, stopCamera, grabFrame } from "./camera.js";
+import { startCamera, stopCamera, grabFrame, grabGuideROI } from "./camera.js";
+import { pickReading } from "./pickReading.js";
 
-const INTERVAL_MS = 100; // 目標の間隔。処理が長引いたぶんは自動で間引く
+// 1フレームにつき枠の中と全体の2回読むので、間隔は広めに取る
+const INTERVAL_MS = 150;
 
 export function createScanSheet({ onDone, onClose }) {
   const $ = id => document.getElementById(id);
@@ -21,6 +23,8 @@ export function createScanSheet({ onDone, onClose }) {
   const startBtn = $("scanStart");
   const finishBtn = $("scanFinish");
   const closeBtn = $("scanClose");
+  const wrap = sheet.querySelector(".camera-wrap");
+  const guide = sheet.querySelector(".scan-guide");
   const workCanvas = document.createElement("canvas");
 
   let session = null;
@@ -57,13 +61,35 @@ export function createScanSheet({ onDone, onClose }) {
     if (Object.keys(results).length > 0) onDone(results);
   }
 
+  /**
+   * カメラ枠を映像の縦横比に合わせる。
+   * 端末を縦に持つと映像も縦長で来るため、固定の 16:9 のままだと左右が黒帯になり、
+   * 映像が細い帯まで縮んでしまう。何を写しているか見えないので液晶を大きく
+   * 捉えられず、ガイド枠も映像の外にはみ出して切り出す範囲がずれる。
+   */
+  function fitCameraBox() {
+    const { videoWidth: w, videoHeight: h } = video;
+    if (w > 0 && h > 0) wrap.style.setProperty("--ar", String(w / h));
+  }
+  video.addEventListener("loadedmetadata", fitCameraBox);
+  video.addEventListener("resize", fitCameraBox);   // 端末の回転で縦横が入れ替わる
+
+  /** 枠の中（原寸に近い）と全体の両方を読み、確からしい方を返す */
+  function readFrame() {
+    const roi = grabGuideROI(video, wrap.getBoundingClientRect(), guide.getBoundingClientRect(), workCanvas);
+    const roiText = roi ? recognizeFrame(roi).text : null;
+    const frame = grabFrame(video, workCanvas);
+    if (!frame && !roi) return undefined;          // まだ映像が来ていない
+    const fullText = frame ? recognizeFrame(frame).text : null;
+    return pickReading(roiText, fullText);
+  }
+
   function tick() {
     if (!running) return;
     const started = performance.now();
 
-    const frame = grabFrame(video, workCanvas);
-    if (frame) {
-      const { text } = recognizeFrame(frame);
+    const text = readFrame();
+    if (text !== undefined) {
       const { captured, complete } = session.feed(text);
       const results = session.getResults();
       statusEl.textContent = [text ? `読み取り中: ${text}` : "", remaining(results)]
@@ -108,6 +134,7 @@ export function createScanSheet({ onDone, onClose }) {
       statusEl.textContent = "カメラ起動中…";
       try {
         await startCamera(video);
+        fitCameraBox();   // loadedmetadata を取り逃していても合わせる
         statusEl.textContent = "「読み取り開始」を押して体組成計に乗ってください";
       } catch (e) {
         statusEl.textContent = "カメラを起動できません。ブラウザの設定でカメラを許可してください";
