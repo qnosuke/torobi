@@ -248,6 +248,11 @@
       <video id="scanVideo" autoplay playsinline muted></video>
       <div class="scan-guide" aria-hidden="true"></div>
     </div>
+    <div class="zoom-row" id="zoomRow" hidden>
+      <span class="zoom-label">ズーム</span>
+      <input type="range" id="zoomRange" min="1" max="4" step="0.1" value="1" aria-label="ズーム">
+      <span class="zoom-value" id="zoomValue">1.0×</span>
+    </div>
     <div class="scan-status" id="scanStatus"></div>
     <div class="scan-chips" id="scanChips"></div>
     <div class="btn-row">
@@ -255,9 +260,10 @@
       <button id="scanFinish" hidden>ここで終了</button>
     </div>
     <p class="note">
-      読み取り開始を押してから体組成計に乗り、<b>数字が枠いっぱいに入るように近づけてください。</b>
+      読み取り開始を押してから体組成計に乗り、<b>数字が枠いっぱいに入るようにしてください。</b>
+      床に置いたまま立って構えると数字が小さすぎて読めないので、<b>近づくか、ズームを上げてください。</b><br>
       枠からはみ出しても、画面のどこかに数字があれば読めます（枠の中と画面全体の両方を見ています）。
-      ただし<b>枠に収まっているときが一番よく読めます。</b>遠いままだとほとんど読めません。<br>
+      ただし枠に収まっているときが一番よく読めます。<br>
       7項目そろうと自動で閉じ、記録シートの入力欄に入ります。読み違いはその場で直せます。
     </p>
   </div>

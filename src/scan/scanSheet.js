@@ -8,8 +8,9 @@
 import { METRICS } from "./metrics.js";
 import { CaptureSession } from "./session.js";
 import { recognizeFrame } from "./sevenseg.js";
-import { startCamera, stopCamera, grabFrame, grabGuideROI } from "./camera.js";
+import { startCamera, stopCamera, grabFrame, grabGuideROI, cameraCapabilities, applyZoom } from "./camera.js";
 import { pickReading } from "./pickReading.js";
+import { zoomRange, zoomPlan, zoomLabel, BASE_GUIDE_WIDTH } from "./zoom.js";
 
 // 1フレームにつき枠の中と全体の2回読むので、間隔は広めに取る
 const INTERVAL_MS = 150;
@@ -25,11 +26,37 @@ export function createScanSheet({ onDone, onClose }) {
   const closeBtn = $("scanClose");
   const wrap = sheet.querySelector(".camera-wrap");
   const guide = sheet.querySelector(".scan-guide");
+  const zoomRow = $("zoomRow");
+  const zoomInput = $("zoomRange");
+  const zoomValue = $("zoomValue");
   const workCanvas = document.createElement("canvas");
 
   let session = null;
   let timer = null;
   let running = false;
+  let range = zoomRange(null);
+
+  // ---- ズーム ----
+  // 端末がセンサー側のズームに対応していればそれを使い、無ければ読む範囲
+  // （ガイド枠）を狭めて原寸で切り出す。操作は1本のスライダーに集約する。
+  function setupZoom() {
+    range = zoomRange(cameraCapabilities());
+    zoomInput.min = String(range.min);
+    zoomInput.max = String(range.max);
+    zoomInput.step = String(range.step);
+    zoomInput.value = String(range.min);
+    zoomRow.hidden = false;
+    applyZoomValue(range.min);
+  }
+
+  function applyZoomValue(value) {
+    const plan = zoomPlan(range, value);
+    guide.style.setProperty("--guide-w", `${plan.guideWidth}%`);
+    zoomValue.textContent = zoomLabel(plan.factor);
+    if (plan.hardwareZoom != null) applyZoom(plan.hardwareZoom);
+  }
+
+  zoomInput.addEventListener("input", () => applyZoomValue(zoomInput.value));
 
   function renderChips(results) {
     chipsEl.innerHTML = METRICS.map(m => {
@@ -128,6 +155,8 @@ export function createScanSheet({ onDone, onClose }) {
   return {
     async open() {
       renderChips({});
+      zoomRow.hidden = true;
+      guide.style.setProperty("--guide-w", `${BASE_GUIDE_WIDTH}%`);
       startBtn.hidden = false;
       finishBtn.hidden = true;
       sheet.classList.add("open");
@@ -135,6 +164,7 @@ export function createScanSheet({ onDone, onClose }) {
       try {
         await startCamera(video);
         fitCameraBox();   // loadedmetadata を取り逃していても合わせる
+        setupZoom();
         statusEl.textContent = "「読み取り開始」を押して体組成計に乗ってください";
       } catch (e) {
         statusEl.textContent = "カメラを起動できません。ブラウザの設定でカメラを許可してください";

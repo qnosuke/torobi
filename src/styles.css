@@ -262,11 +262,25 @@
    認識がいちばん良くなる。はみ出してもフレーム全体の読み取りが受け止める。 */
 .scan-guide {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: 84%; max-height: 70%; aspect-ratio: 5 / 2;
+  width: var(--guide-w, 84%); max-height: 70%; aspect-ratio: 5 / 2;
+  transition: width .12s ease;
   border: 2px solid rgba(255, 122, 47, .75); border-radius: 8px;
   box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .35);
   pointer-events: none;
 }
+/* ズーム。床に置いた液晶を、しゃがまずに大きく捉えるための操作 */
+.zoom-row { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; }
+.zoom-row[hidden] { display: none; }
+.zoom-label { font-size: 12px; color: var(--text-dim); flex: 0 0 auto; }
+.zoom-value {
+  font-size: 13px; color: var(--text); font-variant-numeric: tabular-nums;
+  flex: 0 0 3.2em; text-align: right;
+}
+.zoom-row input[type="range"] {
+  flex: 1; min-width: 0; height: 28px;
+  accent-color: var(--ember); background: transparent;
+}
+
 .scan-status { font-size: 13px; color: var(--text-dim); min-height: 20px; text-align: center; }
 .scan-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
 .scan-chip {
@@ -429,6 +443,7 @@ body.text-large .btn-row button { font-size: 16px; }
 body.text-large .msg { font-size: 15px; }
 body.text-large .scan-status { font-size: 16px; }
 body.text-large .scan-chip { font-size: 15px; }
+body.text-large .zoom-label, body.text-large .zoom-value { font-size: 16px; }
 body.text-large .protein-head .now { font-size: 62px; }
 body.text-large .protein-head .goal { font-size: 18px; }
 body.text-large .food-grid button { font-size: 15px; }
