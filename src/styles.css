@@ -1,20 +1,58 @@
+  /* 自前で持つ（PWAなので通信なしで出したい）。日本語は端末のフォントに任せ、
+     欧文と数字だけこの2つを使う。 */
+  @font-face {
+    font-family: "DM Sans"; font-style: normal; font-weight: 400 700;
+    font-display: swap; src: url("/fonts/dm-sans.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Space Grotesk"; font-style: normal; font-weight: 500 700;
+    font-display: swap; src: url("/fonts/space-grotesk.woff2") format("woff2");
+  }
+
   :root {
-    --bg: #16120e;
-    --surface: #221c15;
-    --surface-2: #2d251b;
-    --ember: #ff7a2f;
-    --ember-dim: #b85a24;
-    --text: #f2e9de;
-    --text-dim: #a89a88;
-    --green: #7fc97f;
+    /* 炭と熾火。oklch なのは、暗い色どうしの明度差を目で見たとおりに置けるため */
+    --bg: oklch(0.17 0.004 60);
+    --surface: oklch(0.22 0.005 60);
+    --surface-2: oklch(0.26 0.006 60);
+    --secondary: oklch(0.3 0.006 60);
+    --ember: oklch(0.66 0.18 42);
+    --ember-soft: oklch(0.78 0.11 55);
+    --ember-dim: oklch(0.46 0.11 42);
+    --text: oklch(0.95 0.005 80);
+    --text-dim: oklch(0.68 0.01 70);
+    --green: oklch(0.78 0.13 150);
+    --border: oklch(1 0 0 / 9%);
     --radius: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 28px;
+
+    --gradient-ember: linear-gradient(135deg, var(--ember), var(--ember-soft));
+    --gradient-surface: linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--surface-2) 90%, transparent),
+      var(--surface)
+    );
+    /* 上辺の細いハイライトと、下に落ちる広いぼかし。面を持ち上げて見せる */
+    --shadow-soft: 0 1px 0 0 oklch(1 0 0 / 6%) inset, 0 18px 40px -24px oklch(0 0 0 / 80%);
+    --shadow-ember: 0 18px 50px -20px color-mix(in oklab, var(--ember) 45%, transparent);
+
+    --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    --font-display: "Space Grotesk", "DM Sans", -apple-system, "Hiragino Sans", sans-serif;
+  }
+
+  /* 面。パネル・カード・シートで共通に使う */
+  .panel {
+    background-image: var(--gradient-surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -39,8 +77,8 @@
     padding: 2px 2px 0;
   }
   header h1 {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 15px; font-weight: 600; letter-spacing: 0;
+    font-family: var(--font-display);
+    font-size: 15px; font-weight: 700; letter-spacing: -.01em;
     color: var(--text-dim);
   }
   header h1 span { font-size: 13px; margin-left: .25em; }
@@ -57,11 +95,12 @@
     background: transparent; padding: 8px 5px; line-height: 0;
   }
   .dots i {
-    display: block; width: 9px; height: 9px; border-radius: 50%;
-    background: #3a3128; transition: background .2s, transform .2s;
+    display: block; width: 6px; height: 6px; border-radius: 3px;
+    background: var(--secondary);
+    transition: width .25s ease, background .25s;
   }
   .dots button.done i { background: var(--ember-dim); }
-  .dots button.on i { background: var(--ember); transform: scale(1.5); }
+  .dots button.on i { width: 24px; background-image: var(--gradient-ember); }
 
   /* ---- stage ---- */
   .stage {
@@ -88,7 +127,8 @@
   }
   .beat {
     position: absolute; inset: -20px 0; pointer-events: none;
-    background: radial-gradient(circle at 50% 50%, rgba(255,122,47,.2), transparent 62%);
+    background: radial-gradient(circle at 50% 50%,
+      color-mix(in oklab, var(--ember) 20%, transparent), transparent 62%);
     opacity: 0; transition: opacity .14s;
   }
   .beat.flash { opacity: 1; transition: opacity 0s; }
@@ -98,24 +138,29 @@
     padding: 4px 6px; max-width: 100%; flex-wrap: wrap;
   }
   .ex-title .name {
-    color: var(--text); font-size: 23px; font-weight: 700; letter-spacing: .02em;
+    font-family: var(--font-display);
+    color: var(--text); font-size: 23px; font-weight: 700; letter-spacing: -.01em;
     max-width: 100%; line-height: 1.25;
   }
   .help-btn {
     flex: 0 0 auto;
     width: 23px; height: 23px; border-radius: 50%;
     background: transparent; color: var(--text-dim);
-    border: 1.5px solid #4a4034;
+    border: 1.5px solid var(--border);
     font-size: 13px; font-weight: 700; line-height: 1;
     display: flex; align-items: center; justify-content: center;
     transition: background .18s, color .18s, border-color .18s;
   }
-  .help-btn.open { background: var(--ember-dim); color: var(--text); border-color: var(--ember-dim); }
+  .help-btn.open {
+    background-image: var(--gradient-ember); color: var(--bg);
+    border-color: transparent;
+  }
   .ex-meta { font-size: 12px; color: var(--text-dim); letter-spacing: .06em; margin-top: 1px; }
 
   .howto {
     max-width: 340px; font-size: 13px; line-height: 1.85; color: var(--text-dim);
-    background: var(--surface); border-radius: 14px;
+    background-image: var(--gradient-surface);
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
     padding: 0 14px; margin-top: 10px;
     max-height: 0; overflow: hidden; opacity: 0;
     transition: max-height .25s ease, opacity .2s, padding .25s;
@@ -125,11 +170,16 @@
   .howto.open { max-height: 560px; opacity: 1; padding: 13px 14px; }
 
   .time {
-    font-size: 92px; font-weight: 200; line-height: 1;
-    font-variant-numeric: tabular-nums; letter-spacing: -.03em;
+    font-family: var(--font-display);
+    font-size: 92px; font-weight: 500; line-height: 1;
+    font-variant-numeric: tabular-nums; letter-spacing: -.04em;
     margin: 18px 0 4px;
   }
-  .time.count-down { color: var(--ember); }
+  /* カウントダウン中だけ、数字そのものを熾火のグラデーションで塗る */
+  .time.count-down {
+    background-image: var(--gradient-ember);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
   .time.done { color: var(--green); }
   .time.prep { color: var(--text-dim); }
   .time.tiny { font-size: 44px; letter-spacing: 0; }
@@ -143,13 +193,18 @@
 
   /* ---- actions ---- */
   .main-btn {
-    width: 100%; border-radius: var(--radius);
+    width: 100%; border-radius: var(--radius-lg);
     padding: 23px; font-size: 20px; font-weight: 700;
-    background: var(--ember); color: #1c1207;
-    letter-spacing: .1em; transition: filter .1s;
+    background-image: var(--gradient-ember); color: var(--bg);
+    box-shadow: var(--shadow-ember);
+    letter-spacing: .06em; transition: filter .1s, box-shadow .2s;
   }
-  .main-btn:active { filter: brightness(.85); }
-  .main-btn.running { background: var(--surface-2); color: var(--text); }
+  .main-btn:active { filter: brightness(.9); }
+  /* 計測中は主役ではなくなるので、光を消して面に沈める */
+  .main-btn.running {
+    background-image: none; background-color: var(--secondary);
+    color: var(--text); box-shadow: var(--shadow-soft);
+  }
   .foot { display: flex; justify-content: center; gap: 22px; padding: 12px 0 2px; min-height: 42px; }
   .foot button {
     background: transparent; color: var(--text-dim);
@@ -166,7 +221,10 @@
   .sheet-bg.open { opacity: 1; pointer-events: auto; }
   .sheet {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 11;
-    background: var(--bg); border-radius: 20px 20px 0 0;
+    background-image: var(--gradient-surface);
+    background-color: var(--bg);
+    border: 1px solid var(--border); border-bottom: 0;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: 6px 16px max(20px, env(safe-area-inset-bottom));
     max-height: 88vh; overflow-y: auto;
     transform: translateY(101%); transition: transform .26s cubic-bezier(.2,.8,.3,1);
@@ -174,34 +232,48 @@
   }
   .sheet.open { transform: translateY(0); }
   .sheet-inner { max-width: 420px; margin: 0 auto; }
-  .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--surface-2); margin: 8px auto 14px; }
-  .sheet h2 { font-size: 15px; font-weight: 700; margin-bottom: 14px; letter-spacing: .06em; }
+  .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--secondary); margin: 8px auto 14px; }
+  .sheet h2 {
+    font-family: var(--font-display);
+    font-size: 17px; font-weight: 700; margin-bottom: 14px; letter-spacing: -.01em;
+  }
   .sheet section { margin-bottom: 22px; }
 
   .row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
   .row .label { font-size: 12px; color: var(--text-dim); flex: 0 0 4.2em; white-space: nowrap; }
-  .seg { display: flex; flex: 1; background: var(--surface); border-radius: 10px; padding: 3px; }
+  .seg {
+    display: flex; flex: 1; padding: 3px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px;
+  }
   .seg button {
     flex: 1; background: transparent; color: var(--text-dim);
-    font-size: 13px; font-weight: 600; padding: 9px 4px; border-radius: 8px;
-    transition: background .15s, color .15s;
+    font-size: 13px; font-weight: 600; padding: 9px 4px; border-radius: 999px;
+    transition: background .25s, color .25s;
   }
-  .seg button.on { background: var(--ember-dim); color: var(--text); }
+  .seg button.on { background-image: var(--gradient-ember); color: var(--bg); }
   .seg button small { display: block; font-size: 10px; opacity: .7; margin-top: 1px; }
-  .stepper { display: flex; flex: 1; align-items: center; background: var(--surface); border-radius: 10px; padding: 3px; }
+  .stepper {
+    display: flex; flex: 1; align-items: center; padding: 3px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+  }
   .stepper button { flex: 0 0 46px; background: transparent; color: var(--ember); font-size: 18px; font-weight: 700; padding: 9px 0; border-radius: 8px; }
   .stepper button:active { background: var(--ember-dim); color: var(--text); }
   .stepper .week-disp { flex: 1; text-align: center; font-size: 13px; font-weight: 600; }
   .stepper .week-disp small { color: var(--text-dim); }
 
-  .rec-day { font-size: 12px; color: var(--ember); font-weight: 700; margin-bottom: 8px; }
+  .rec-day {
+    font-size: 11px; color: var(--text-dim); font-weight: 600;
+    letter-spacing: .18em; text-transform: uppercase; margin-bottom: 10px;
+  }
   .rec-row {
     display: flex; align-items: baseline; gap: 10px;
-    font-size: 14px; padding: 9px 11px; margin-bottom: 6px;
-    background: var(--surface); border-radius: 10px;
+    font-size: 14px; padding: 11px 13px; margin-bottom: 6px;
+    background-image: var(--gradient-surface);
+    border: 1px solid var(--border); border-radius: var(--radius);
   }
   .rec-row .n { color: var(--text-dim); font-size: 12px; flex: 1; }
-  .rec-row .s { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .rec-row .s { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; }
   .rec-row .r { color: var(--text-dim); font-size: 11px; }
   .empty { font-size: 13px; color: var(--text-dim); text-align: center; padding: 14px; }
 
@@ -218,11 +290,13 @@
 
   .btn-row { display: flex; gap: 8px; }
   .btn-row button {
-    flex: 1; border-radius: 10px; padding: 13px 8px;
-    background: var(--surface); color: var(--text);
+    flex: 1; border-radius: var(--radius); padding: 14px 8px;
+    background-image: var(--gradient-surface);
+    border: 1px solid var(--border); color: var(--text);
     font-size: 13px; font-weight: 600;
+    transition: transform .2s, border-color .2s;
   }
-  .btn-row button:active { background: var(--ember-dim); }
+  .btn-row button:active { transform: translateY(1px); border-color: var(--ember-dim); }
   .msg { font-size: 12px; color: var(--green); min-height: 17px; margin-top: 9px; }
   .note { font-size: 11px; color: var(--text-dim); line-height: 1.8; }
   .danger { color: var(--ember) !important; }
@@ -234,7 +308,7 @@
   font-size: 11px; color: var(--text-dim); white-space: nowrap;
 }
 .body-grid input {
-  width: 100%; min-width: 0; border: 0; border-radius: 8px;
+  width: 100%; min-width: 0; border: 1px solid var(--border); border-radius: 12px;
   background: var(--surface); color: var(--text);
   font-size: 16px; font-family: inherit; font-variant-numeric: tabular-nums;
   padding: 9px 6px; text-align: center;
@@ -255,7 +329,8 @@
   /* 高さの上限に収まる幅を選ぶ。こうすると黒帯が出ず、枠＝映像になる */
   width: min(100%, calc(46vh * var(--ar)));
   aspect-ratio: var(--ar); max-height: 46vh;
-  background: #000; border-radius: 14px; overflow: hidden;
+  background: #000; border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden;
 }
 .camera-wrap video { width: 100%; height: 100%; object-fit: contain; display: block; }
 /* ここに液晶を入れてもらう枠。中身を原寸で切り出して読むので、収まっていると
@@ -293,27 +368,36 @@
 /* ---- 食事 ---- */
 .protein-head { display: flex; align-items: baseline; gap: 6px; justify-content: center; padding: 2px 0 10px; }
 .protein-head .now {
-  font-size: 46px; font-weight: 200; line-height: 1;
-  font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+  font-family: var(--font-display);
+  font-size: 52px; font-weight: 600; line-height: 1;
+  font-variant-numeric: tabular-nums; letter-spacing: -.03em;
+  background-image: var(--gradient-ember);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.protein-head .now.hit { color: var(--green); }
+.protein-head .now.hit { background-image: none; color: var(--green); }
 .protein-head .goal { font-size: 14px; color: var(--text-dim); }
-.bar { height: 6px; border-radius: 3px; background: var(--surface); overflow: hidden; }
-.bar i { display: block; height: 100%; width: 0; background: var(--ember); transition: width .25s ease, background .25s; }
-.bar i.hit { background: var(--green); }
+.bar { height: 3px; border-radius: 999px; background: var(--secondary); overflow: hidden; }
+.bar i {
+  display: block; height: 100%; width: 0;
+  background-image: var(--gradient-ember);
+  transition: width .25s ease;
+}
+.bar i.hit { background-image: none; background-color: var(--green); }
 
 .food-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0 8px; }
 .food-grid button {
-  background: var(--surface); color: var(--text);
-  border-radius: 10px; padding: 10px 4px; font-size: 12px; font-weight: 600;
+  background-image: var(--gradient-surface);
+  border: 1px solid var(--border); color: var(--text);
+  border-radius: var(--radius); padding: 12px 4px; font-size: 12px; font-weight: 600;
   line-height: 1.3; min-width: 0;
+  transition: transform .2s, border-color .2s;
 }
-.food-grid button:active { background: var(--ember-dim); }
+.food-grid button:active { transform: translateY(1px); border-color: var(--ember-dim); }
 .food-grid button small { display: block; font-size: 10px; color: var(--text-dim); margin-top: 2px; }
 
 .free-row { display: flex; gap: 8px; margin-top: 6px; }
 .free-row input {
-  flex: 1; min-width: 0; border: 0; border-radius: 10px;
+  flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 12px;
   background: var(--surface); color: var(--text);
   font-size: 16px; font-family: inherit; padding: 11px 10px;
 }
@@ -334,14 +418,19 @@
 
 .target-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .target-grid div {
-  background: var(--surface); border-radius: 10px; padding: 10px 4px; text-align: center;
+  background-image: var(--gradient-surface);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 4px; text-align: center;
 }
 .target-grid .k { font-size: 10px; color: var(--text-dim); display: block; }
-.target-grid .v { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.target-grid .v {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
 .target-grid .u { font-size: 10px; color: var(--text-dim); }
 
 .field {
-  flex: 1; min-width: 0; border: 0; border-radius: 10px;
+  flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 12px;
   background: var(--surface); color: var(--text);
   font-size: 16px; font-family: inherit; font-variant-numeric: tabular-nums;
   padding: 11px 10px; text-align: center;
