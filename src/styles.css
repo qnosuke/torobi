@@ -47,8 +47,9 @@
     box-shadow: var(--shadow-soft);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; }
+  html { height: 100%; }
   body {
+    min-height: 100%;
     background: var(--bg);
     color: var(--text);
     font-family: var(--font-sans);
@@ -71,26 +72,35 @@
     flex-direction: column;
   }
 
+  /* 小さく詰めた英字ラベル。試作の情報階層の起点になっている要素 */
+  .eyebrow {
+    font-size: 11px; font-weight: 500; letter-spacing: .28em;
+    color: var(--text-dim); text-transform: uppercase;
+  }
+
   /* ---- header ---- */
   header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 2px 2px 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 16px 2px 12px;
   }
-  header h1 {
+  .head-main { min-width: 0; }
+  .day-title {
     font-family: var(--font-display);
-    font-size: 15px; font-weight: 700; letter-spacing: -.01em;
-    color: var(--text-dim);
+    font-size: 30px; font-weight: 700; letter-spacing: -.02em;
+    color: var(--text); line-height: 1.15; margin-top: 7px;
   }
-  header h1 span { font-size: 13px; margin-left: .25em; }
   .icon-btn {
-    background: transparent; color: var(--text-dim);
-    font-size: 20px; padding: 5px 7px; border-radius: 10px; line-height: 1;
-    opacity: .85;
+    flex: 0 0 auto;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--surface); color: var(--text-dim);
+    border: 1px solid var(--border);
+    font-size: 19px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
   }
-  .icon-btn:active { background: var(--surface); opacity: 1; }
+  .icon-btn:active { background: var(--surface-2); }
 
   /* ---- progress dots ---- */
-  .dots { display: flex; justify-content: center; gap: 4px; padding: 16px 0 6px; }
+  .dots { display: flex; justify-content: center; gap: 5px; padding: 16px 0 2px; }
   .dots button {
     background: transparent; padding: 8px 5px; line-height: 0;
   }
@@ -106,13 +116,32 @@
   .stage {
     flex: 1;
     display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
     text-align: center;
-    position: relative;
-    padding: 6px 0 14px;
-    min-height: 380px;
+    position: relative; overflow: hidden;
+    padding: 20px 18px 18px;
+    border-radius: var(--radius-xl);
     transition: transform .2s cubic-bezier(.2,.8,.3,1);
     touch-action: pan-y;
+  }
+  /* 中身は上下に伸びる。ボタンはカードの底に固定して高さのぶれを吸収する */
+  .stage-body {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center;
+    min-height: 260px;
+  }
+  /* 数字まわりは余った高さの真ん中に置く。カードの下に空白が溜まらない */
+  .stage-core {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    width: 100%;
+  }
+  /* カードの角に漂うぼかした熾火。試作のいちばんの見せ場 */
+  .glow {
+    position: absolute; top: -90px; right: -60px;
+    width: 220px; height: 220px; border-radius: 50%;
+    background-image: var(--gradient-ember);
+    opacity: .22; filter: blur(60px);
+    pointer-events: none;
   }
   .stage.dragging { transition: none; }
   .stage.enter-l { animation: enterL .24s ease-out; }
@@ -126,7 +155,7 @@
     to { transform: translateX(0); opacity: 1; }
   }
   .beat {
-    position: absolute; inset: -20px 0; pointer-events: none;
+    position: absolute; inset: 0; pointer-events: none;
     background: radial-gradient(circle at 50% 50%,
       color-mix(in oklab, var(--ember) 20%, transparent), transparent 62%);
     opacity: 0; transition: opacity .14s;
@@ -134,8 +163,8 @@
   .beat.flash { opacity: 1; transition: opacity 0s; }
 
   .ex-title {
-    display: flex; align-items: center; justify-content: center; gap: 9px;
-    padding: 4px 6px; max-width: 100%; flex-wrap: wrap;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 2px; max-width: 100%;
   }
   .ex-title .name {
     font-family: var(--font-display);
@@ -143,8 +172,8 @@
     max-width: 100%; line-height: 1.25;
   }
   .help-btn {
-    flex: 0 0 auto;
-    width: 23px; height: 23px; border-radius: 50%;
+    position: absolute; top: 16px; right: 16px; z-index: 1;
+    width: 28px; height: 28px; border-radius: 50%;
     background: transparent; color: var(--text-dim);
     border: 1.5px solid var(--border);
     font-size: 13px; font-weight: 700; line-height: 1;
@@ -155,7 +184,7 @@
     background-image: var(--gradient-ember); color: var(--bg);
     border-color: transparent;
   }
-  .ex-meta { font-size: 12px; color: var(--text-dim); letter-spacing: .06em; margin-top: 1px; }
+  .ex-meta { margin-bottom: 10px; padding: 0 34px; }
 
   .howto {
     max-width: 340px; font-size: 13px; line-height: 1.85; color: var(--text-dim);
@@ -165,7 +194,6 @@
     max-height: 0; overflow: hidden; opacity: 0;
     transition: max-height .25s ease, opacity .2s, padding .25s;
     text-align: left;
-    white-space: pre-line;   /* ウォームアップの手順を1行ずつ表示するため */
   }
   .howto.open { max-height: 560px; opacity: 1; padding: 13px 14px; }
 
@@ -173,7 +201,7 @@
     font-family: var(--font-display);
     font-size: 92px; font-weight: 500; line-height: 1;
     font-variant-numeric: tabular-nums; letter-spacing: -.04em;
-    margin: 18px 0 4px;
+    margin: 20px 0 6px;
   }
   /* カウントダウン中だけ、数字そのものを熾火のグラデーションで塗る */
   .time.count-down {
@@ -188,13 +216,29 @@
     font-size: 15px; letter-spacing: .32em; font-weight: 700;
     color: var(--ember); min-height: 21px;
   }
-  .sub { font-size: 14px; color: var(--text-dim); min-height: 40px; padding: 4px 8px 0; line-height: 1.6; }
+  .sub { font-size: 13px; color: var(--text-dim); min-height: 38px; padding: 4px 4px 0; line-height: 1.6; }
   .sub b { color: var(--text); font-weight: 700; }
+
+  /* テンポ・セット・休憩。試作の3列チップ */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; margin-top: 10px; }
+  .stats div {
+    background: color-mix(in oklab, var(--secondary) 55%, transparent);
+    border-radius: var(--radius); padding: 11px 4px;
+  }
+  .stats dt {
+    font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .stats dd {
+    font-family: var(--font-display); font-variant-numeric: tabular-nums;
+    font-size: 15px; font-weight: 700; margin-top: 4px;
+  }
 
   /* ---- actions ---- */
   .main-btn {
-    width: 100%; border-radius: var(--radius-lg);
-    padding: 23px; font-size: 20px; font-weight: 700;
+    position: relative; width: 100%; border-radius: var(--radius-lg);
+    margin-top: 20px;
+    padding: 19px; font-size: 18px; font-weight: 700;
     background-image: var(--gradient-ember); color: var(--bg);
     box-shadow: var(--shadow-ember);
     letter-spacing: .06em; transition: filter .1s, box-shadow .2s;
@@ -205,12 +249,14 @@
     background-image: none; background-color: var(--secondary);
     color: var(--text); box-shadow: var(--shadow-soft);
   }
-  .foot { display: flex; justify-content: center; gap: 22px; padding: 12px 0 2px; min-height: 42px; }
+  .foot { display: flex; justify-content: center; gap: 10px; padding: 10px 0 2px; min-height: 44px; }
   .foot button {
-    background: transparent; color: var(--text-dim);
-    font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 13px; font-weight: 600; padding: 9px 20px; border-radius: 999px;
+    transition: color .2s, border-color .2s;
   }
-  .foot button:active { background: var(--surface); }
+  .foot button:active { color: var(--text); border-color: var(--ember-dim); }
   .foot button.hide { display: none; }
 
   /* ---- sheets ---- */
@@ -470,7 +516,7 @@
   object-fit: cover;
 }
 .howto-video[hidden] { display: none; }
-.howto-text { margin: 0; }
+.howto-text { margin: 0; white-space: pre-line; }   /* ウォームアップの手順を1行ずつ */
 
 /* ---- 初回の文字サイズ選択 ---- */
 .first-run {
@@ -497,19 +543,20 @@
 /* ---- 大きい文字 ---- */
 /* 運動中は端末を床に置く。1m前後の距離から読めることを基準にする。
    メイン画面は思い切り大きく、手元で読むシート類は控えめに上げる。 */
-body.text-large .time { font-size: 150px; }
+body.text-large .time { font-size: 128px; }
 body.text-large .time.tiny { font-size: 64px; }
 body.text-large .ex-title .name { font-size: 34px; }
 body.text-large .ex-meta { font-size: 19px; }
 body.text-large .phase { font-size: 26px; letter-spacing: .2em; min-height: 34px; }
-body.text-large .sub { font-size: 23px; min-height: 62px; line-height: 1.5; }
-body.text-large .main-btn { font-size: 30px; padding: 30px; }
+body.text-large .sub { font-size: 23px; min-height: 52px; line-height: 1.5; }
+body.text-large .main-btn { font-size: 30px; padding: 24px; }
 body.text-large .foot button { font-size: 18px; padding: 10px 14px; }
-body.text-large header h1 { font-size: 18px; }
+body.text-large .eyebrow { font-size: 13px; }
+body.text-large .day-title { font-size: 36px; }
 body.text-large .dots i { width: 13px; height: 13px; }
 body.text-large .dots button { padding: 9px 6px; }
-body.text-large .icon-btn { font-size: 26px; }
-body.text-large .help-btn { width: 30px; height: 30px; font-size: 17px; border-width: 2px; }
+body.text-large .icon-btn { width: 50px; height: 50px; font-size: 24px; }
+body.text-large .help-btn { width: 34px; height: 34px; font-size: 18px; border-width: 2px; }
 body.text-large .howto { font-size: 18px; max-width: 100%; }
 body.text-large .howto.open { max-height: 760px; }
 

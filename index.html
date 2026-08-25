@@ -15,29 +15,37 @@
 <body>
 <div class="app">
   <header>
-    <h1>TOROBI<span>🔥</span></h1>
+    <div class="head-main">
+      <p class="eyebrow" id="weekEyebrow">第1週 ／ 火をつける</p>
+      <h1 class="day-title" id="dayTitle">肩の日</h1>
+    </div>
     <button class="icon-btn" id="openSettings" aria-label="設定">🧑‍🍳</button>
   </header>
 
-  <div class="dots" id="dots"></div>
-
-  <div class="stage">
+  <section class="stage panel">
+    <div class="glow" aria-hidden="true"></div>
     <div class="beat" id="beatFlash"></div>
-    <div class="ex-title">
-      <span class="name" id="exNameText">—</span>
-      <button class="help-btn" id="helpBtn" aria-label="やり方を見る">?</button>
+    <button class="help-btn" id="helpBtn" aria-label="やり方を見る">?</button>
+    <div class="stage-body">
+      <div class="stage-core">
+        <div class="ex-meta eyebrow" id="exMeta"></div>
+        <div class="ex-title">
+          <span class="name" id="exNameText">—</span>
+        </div>
+        <div class="howto" id="howto">
+          <video class="howto-video" id="howtoVideo" muted loop playsinline preload="none" hidden></video>
+          <p class="howto-text" id="howtoText"></p>
+        </div>
+        <div class="time" id="timeDisp">0</div>
+        <div class="phase" id="phaseDisp"></div>
+        <div class="sub" id="subDisp"></div>
+      </div>
+      <dl class="stats" id="stats"></dl>
     </div>
-    <div class="ex-meta" id="exMeta"></div>
-    <div class="howto" id="howto">
-      <video class="howto-video" id="howtoVideo" muted loop playsinline preload="none" hidden></video>
-      <p class="howto-text" id="howtoText"></p>
-    </div>
-    <div class="time" id="timeDisp">0</div>
-    <div class="phase" id="phaseDisp"></div>
-    <div class="sub" id="subDisp"></div>
-  </div>
+    <button class="main-btn" id="mainBtn">開始</button>
+  </section>
 
-  <button class="main-btn" id="mainBtn">開始</button>
+  <div class="dots" id="dots"></div>
 
   <div class="foot">
     <button id="openRecord">記録</button>

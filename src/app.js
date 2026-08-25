@@ -100,6 +100,7 @@ const exMeta = $("exMeta"), howto = $("howto"), timeDisp = $("timeDisp");
 const phaseDisp = $("phaseDisp"), subDisp = $("subDisp"), mainBtn = $("mainBtn");
 const beatFlash = $("beatFlash"), extraSetBtn = $("extraSetBtn"), stage = document.querySelector(".stage");
 const weekDisp = $("weekDisp"), daySeg = $("daySeg"), prepSeg = $("prepSeg"), soundSeg = $("soundSeg");
+const weekEyebrow = $("weekEyebrow"), dayTitle = $("dayTitle"), stats = $("stats");
 const exportMsg = $("exportMsg"), recToday = $("recToday");
 const importBtn = $("importBtn"), importFile = $("importFile"), importMsg = $("importMsg");
 const sheetBg = $("sheetBg"), settingsSheet = $("settingsSheet"), recordSheet = $("recordSheet");
@@ -142,6 +143,13 @@ function renderDots() {
   ).join("");
 }
 
+/** テンポ・セット・休憩の3列。空の項目は出さない */
+function renderStats(rows) {
+  stats.innerHTML = rows
+    .map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`)
+    .join("");
+}
+
 function renderIdle() {
   const ex = cur();
   renderDots();
@@ -154,7 +162,8 @@ function renderIdle() {
   timeDisp.classList.remove("tiny");
 
   if (ex.warmup) {
-    exMeta.textContent = ex.done ? "3分 ─ 完了 ✓" : "3分・4ステップ";
+    exMeta.textContent = ex.done ? "ウォームアップ ・ 完了" : "ウォームアップ ・ 3分";
+    renderStats(WARMUP_STEPS.map((w, i) => [`${i + 1}`, `${w.sec}秒`]).slice(0, 3));
     timeDisp.textContent = String(WARMUP_TOTAL);
     timeDisp.className = "time";
     subDisp.textContent = ex.done ? "" : "合図が来たら次の動きへ";
@@ -164,7 +173,12 @@ function renderIdle() {
   }
 
   const side = ex.uni ? SIDE_JA[ex.side] : "";
-  exMeta.textContent = `${ex.weight}${ex.uni ? "・左右" : ""}`;
+  exMeta.textContent = `${ex.slot} ・ ${ex.weight}${ex.uni ? " ・ 左右" : ""}`;
+  renderStats([
+    ["テンポ", `${state.tempoDown}-${state.tempoUp}`],
+    ["セット", `${doneSets(ex)} / ${ex.target}`],
+    ["休憩", ex.isolation ? "45秒" : "60秒"],
+  ]);
 
   if (isComplete(ex)) {
     const first = ex.sets.filter(s => s.no === 1);
@@ -571,6 +585,8 @@ function changeWeek(d) {
 }
 function renderWeek() {
   weekDisp.innerHTML = `第${state.week}週 <small>／ ${phaseLabel(state.week)}</small>`;
+  weekEyebrow.textContent = `第${state.week}週 ／ ${phaseLabel(state.week)}`;
+  dayTitle.textContent = state.day === "mon" ? "肩の日" : "腕の日";
 }
 
 daySeg.addEventListener("click", e => {
@@ -579,6 +595,7 @@ daySeg.addEventListener("click", e => {
   if (state.running) cancel();
   state.day = b.dataset.day;
   daySeg.querySelectorAll("button").forEach(x => x.classList.toggle("on", x.dataset.day === state.day));
+  renderWeek();          // ヘッダーの「肩の日／腕の日」も合わせる
   buildExercises();
   autoTempo();
   renderIdle();
