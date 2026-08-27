@@ -1,12 +1,11 @@
   /* 自前で持つ（PWAなので通信なしで出したい）。日本語は端末のフォントに任せ、
-     欧文と数字だけこの2つを使う。 */
+     欧文と数字だけこれを使う。
+     見出し用に別の書体を当てていたが、画面でいちばん大きいのはタイマーの数字で、
+     書体の癖がそのまま拡大されて出ていた。癖のない一本に寄せる。日本語（ヒラギノ／
+     Noto Sans JP）と並べたときの段差も、こちらの方が小さい。 */
   @font-face {
-    font-family: "DM Sans"; font-style: normal; font-weight: 400 700;
-    font-display: swap; src: url("/fonts/dm-sans.woff2") format("woff2");
-  }
-  @font-face {
-    font-family: "Space Grotesk"; font-style: normal; font-weight: 500 700;
-    font-display: swap; src: url("/fonts/space-grotesk.woff2") format("woff2");
+    font-family: "Inter"; font-style: normal; font-weight: 400 700;
+    font-display: swap; src: url("/fonts/inter.woff2") format("woff2");
   }
 
   :root {
@@ -36,8 +35,8 @@
     --shadow-soft: 0 1px 0 0 oklch(1 0 0 / 6%) inset, 0 18px 40px -24px oklch(0 0 0 / 80%);
     --shadow-ember: 0 18px 50px -20px color-mix(in oklab, var(--ember) 45%, transparent);
 
-    --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
-    --font-display: "Space Grotesk", "DM Sans", -apple-system, "Hiragino Sans", sans-serif;
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    --font-display: var(--font-sans);
   }
 
   /* 面。パネル・カード・シートで共通に使う */
