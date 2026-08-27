@@ -7,9 +7,9 @@
 
 import { METRICS } from "./metrics.js";
 import { CaptureSession } from "./session.js";
-import { recognizeFrame } from "./sevenseg.js";
-import { startCamera, stopCamera, grabFrame, grabGuideROI } from "./camera.js";
-import { pickReading } from "./pickReading.js";
+import { startCamera, stopCamera, grabFrame, grabGuideROI, cameraCapabilities, applyZoom } from "./camera.js";
+import { createRecognizer } from "./recognizer.js";
+import { zoomRange, zoomPlan, zoomLabel, BASE_GUIDE_WIDTH } from "./zoom.js";
 
 // 1フレームにつき枠の中と全体の2回読むので、間隔は広めに取る
 const INTERVAL_MS = 150;
@@ -25,11 +25,38 @@ export function createScanSheet({ onDone, onClose }) {
   const closeBtn = $("scanClose");
   const wrap = sheet.querySelector(".camera-wrap");
   const guide = sheet.querySelector(".scan-guide");
+  const zoomRow = $("zoomRow");
+  const zoomInput = $("zoomRange");
+  const zoomValue = $("zoomValue");
   const workCanvas = document.createElement("canvas");
 
   let session = null;
   let timer = null;
   let running = false;
+  let range = zoomRange(null);
+  const recognizer = createRecognizer();
+
+  // ---- ズーム ----
+  // 端末がセンサー側のズームに対応していればそれを使い、無ければ読む範囲
+  // （ガイド枠）を狭めて原寸で切り出す。操作は1本のスライダーに集約する。
+  function setupZoom() {
+    range = zoomRange(cameraCapabilities());
+    zoomInput.min = String(range.min);
+    zoomInput.max = String(range.max);
+    zoomInput.step = String(range.step);
+    zoomInput.value = String(range.min);
+    zoomRow.hidden = false;
+    applyZoomValue(range.min);
+  }
+
+  function applyZoomValue(value) {
+    const plan = zoomPlan(range, value);
+    guide.style.setProperty("--guide-w", `${plan.guideWidth}%`);
+    zoomValue.textContent = zoomLabel(plan.factor);
+    if (plan.hardwareZoom != null) applyZoom(plan.hardwareZoom);
+  }
+
+  zoomInput.addEventListener("input", () => applyZoomValue(zoomInput.value));
 
   function renderChips(results) {
     chipsEl.innerHTML = METRICS.map(m => {
@@ -74,22 +101,25 @@ export function createScanSheet({ onDone, onClose }) {
   video.addEventListener("loadedmetadata", fitCameraBox);
   video.addEventListener("resize", fitCameraBox);   // 端末の回転で縦横が入れ替わる
 
-  /** 枠の中（原寸に近い）と全体の両方を読み、確からしい方を返す */
-  function readFrame() {
+  /**
+   * 枠の中（原寸に近い）と全体を切り出して認識に渡す。
+   * 切り出しはメインスレッドでしかできないが、重いのは認識の方なので
+   * そちらを別スレッドへ逃がす。読み取り中もタップが効くようにするため。
+   */
+  function grabBoth() {
     const roi = grabGuideROI(video, wrap.getBoundingClientRect(), guide.getBoundingClientRect(), workCanvas);
-    const roiText = roi ? recognizeFrame(roi).text : null;
-    const frame = grabFrame(video, workCanvas);
-    if (!frame && !roi) return undefined;          // まだ映像が来ていない
-    const fullText = frame ? recognizeFrame(frame).text : null;
-    return pickReading(roiText, fullText);
+    const full = grabFrame(video, workCanvas);
+    return (roi || full) ? { roi, full } : null;   // まだ映像が来ていない
   }
 
-  function tick() {
+  async function tick() {
     if (!running) return;
     const started = performance.now();
 
-    const text = readFrame();
-    if (text !== undefined) {
+    const frames = grabBoth();
+    if (frames) {
+      const text = await recognizer.recognize(frames.roi, frames.full);
+      if (!running) return;                        // 待っている間に閉じられた
       const { captured, complete } = session.feed(text);
       const results = session.getResults();
       statusEl.textContent = [text ? `読み取り中: ${text}` : "", remaining(results)]
@@ -128,6 +158,8 @@ export function createScanSheet({ onDone, onClose }) {
   return {
     async open() {
       renderChips({});
+      zoomRow.hidden = true;
+      guide.style.setProperty("--guide-w", `${BASE_GUIDE_WIDTH}%`);
       startBtn.hidden = false;
       finishBtn.hidden = true;
       sheet.classList.add("open");
@@ -135,6 +167,7 @@ export function createScanSheet({ onDone, onClose }) {
       try {
         await startCamera(video);
         fitCameraBox();   // loadedmetadata を取り逃していても合わせる
+        setupZoom();
         statusEl.textContent = "「読み取り開始」を押して体組成計に乗ってください";
       } catch (e) {
         statusEl.textContent = "カメラを起動できません。ブラウザの設定でカメラを許可してください";

@@ -8,10 +8,12 @@ export async function startCamera(videoEl) {
   const stream = await navigator.mediaDevices.getUserMedia({
     video: {
       facingMode: { ideal: 'environment' },
-      // 液晶を切り出さずフレーム全体から読むぶん、数字に乗る画素が少なくなる。
-      // 端末が出せるなら高い方をもらい、認識前の縮小で必要なだけ落とす。
-      width: { ideal: 1920 },
-      height: { ideal: 1080 },
+      // 体組成計は床にあるので、立って構えると液晶は画面のごく一部にしかならない。
+      // ズームで枠を狭めて原寸で切り出しても、元の画素が無ければ桁は読めない
+      // （実測: 撮影1080幅だと占有20%で0/7、2160幅なら4/7）。
+      // 端末が出せるだけもらい、認識の直前に必要なところまで落とす。
+      width: { ideal: 3840 },
+      height: { ideal: 2160 },
     },
     audio: false,
   });
@@ -19,6 +21,36 @@ export async function startCamera(videoEl) {
   videoEl.srcObject = stream;
   await videoEl.play();
   return stream;
+}
+
+/** 現在のストリームの映像トラック（無ければ null） */
+function videoTrack() {
+  return currentStream ? currentStream.getVideoTracks()[0] ?? null : null;
+}
+
+/**
+ * カメラの能力。ズームに対応しているかの判定に使う。
+ * 取得できない環境（古いSafari等）では null を返す。
+ */
+export function cameraCapabilities() {
+  const track = videoTrack();
+  if (!track || typeof track.getCapabilities !== 'function') return null;
+  try { return track.getCapabilities(); } catch (e) { return null; }
+}
+
+/**
+ * センサー側のズームを適用する。対応していなければ何もしない。
+ * @returns {Promise<boolean>} 実際に適用できたか
+ */
+export async function applyZoom(value) {
+  const track = videoTrack();
+  if (!track || typeof track.applyConstraints !== 'function') return false;
+  try {
+    await track.applyConstraints({ advanced: [{ zoom: value }] });
+    return true;
+  } catch (e) {
+    return false;   // 端末が拒否しても読み取り自体は続けられる
+  }
 }
 
 export function stopCamera() {

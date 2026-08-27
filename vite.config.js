@@ -12,6 +12,8 @@ export default defineConfig(({ command }) => ({
       includeAssets: ['icons/apple-touch-icon.png'],
       // やり方の動画は数が多いので先読みしない。一度見たものだけ端末に残す。
       workbox: {
+        // 既定では woff2 が入らない。通信なしでも同じ字で出したいので明示する
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         runtimeCaching: [{
           urlPattern: /\/howto\/.*\.mp4$/,
           handler: 'CacheFirst',

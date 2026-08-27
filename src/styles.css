@@ -1,20 +1,58 @@
+  /* 自前で持つ（PWAなので通信なしで出したい）。日本語は端末のフォントに任せ、
+     欧文と数字だけこれを使う。
+     見出し用に別の書体を当てていたが、画面でいちばん大きいのはタイマーの数字で、
+     書体の癖がそのまま拡大されて出ていた。癖のない一本に寄せる。日本語（ヒラギノ／
+     Noto Sans JP）と並べたときの段差も、こちらの方が小さい。 */
+  @font-face {
+    font-family: "Inter"; font-style: normal; font-weight: 400 700;
+    font-display: swap; src: url("/fonts/inter.woff2") format("woff2");
+  }
+
   :root {
-    --bg: #16120e;
-    --surface: #221c15;
-    --surface-2: #2d251b;
-    --ember: #ff7a2f;
-    --ember-dim: #b85a24;
-    --text: #f2e9de;
-    --text-dim: #a89a88;
-    --green: #7fc97f;
+    /* 炭と熾火。oklch なのは、暗い色どうしの明度差を目で見たとおりに置けるため */
+    --bg: oklch(0.17 0.004 60);
+    --surface: oklch(0.22 0.005 60);
+    --surface-2: oklch(0.26 0.006 60);
+    --secondary: oklch(0.3 0.006 60);
+    --ember: oklch(0.66 0.18 42);
+    --ember-soft: oklch(0.78 0.11 55);
+    --ember-dim: oklch(0.46 0.11 42);
+    --text: oklch(0.95 0.005 80);
+    --text-dim: oklch(0.68 0.01 70);
+    --green: oklch(0.78 0.13 150);
+    --border: oklch(1 0 0 / 9%);
     --radius: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 28px;
+
+    --gradient-ember: linear-gradient(135deg, var(--ember), var(--ember-soft));
+    --gradient-surface: linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--surface-2) 90%, transparent),
+      var(--surface)
+    );
+    /* 上辺の細いハイライトと、下に落ちる広いぼかし。面を持ち上げて見せる */
+    --shadow-soft: 0 1px 0 0 oklch(1 0 0 / 6%) inset, 0 18px 40px -24px oklch(0 0 0 / 80%);
+    --shadow-ember: 0 18px 50px -20px color-mix(in oklab, var(--ember) 45%, transparent);
+
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    --font-display: var(--font-sans);
+  }
+
+  /* 面。パネル・カード・シートで共通に使う */
+  .panel {
+    background-image: var(--gradient-surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; }
+  html { height: 100%; }
   body {
+    min-height: 100%;
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -33,47 +71,76 @@
     flex-direction: column;
   }
 
+  /* 小さく詰めた英字ラベル。試作の情報階層の起点になっている要素 */
+  .eyebrow {
+    font-size: 11px; font-weight: 500; letter-spacing: .28em;
+    color: var(--text-dim); text-transform: uppercase;
+  }
+
   /* ---- header ---- */
   header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 2px 2px 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 16px 2px 12px;
   }
-  header h1 {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 15px; font-weight: 600; letter-spacing: 0;
-    color: var(--text-dim);
+  .head-main { min-width: 0; }
+  .day-title {
+    font-family: var(--font-display);
+    font-size: 30px; font-weight: 700; letter-spacing: -.02em;
+    color: var(--text); line-height: 1.15; margin-top: 7px;
   }
-  header h1 span { font-size: 13px; margin-left: .25em; }
   .icon-btn {
-    background: transparent; color: var(--text-dim);
-    font-size: 20px; padding: 5px 7px; border-radius: 10px; line-height: 1;
-    opacity: .85;
+    flex: 0 0 auto;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--surface); color: var(--text-dim);
+    border: 1px solid var(--border);
+    font-size: 19px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
   }
-  .icon-btn:active { background: var(--surface); opacity: 1; }
+  .icon-btn:active { background: var(--surface-2); }
 
   /* ---- progress dots ---- */
-  .dots { display: flex; justify-content: center; gap: 4px; padding: 16px 0 6px; }
+  .dots { display: flex; justify-content: center; gap: 5px; padding: 16px 0 2px; }
   .dots button {
     background: transparent; padding: 8px 5px; line-height: 0;
   }
   .dots i {
-    display: block; width: 9px; height: 9px; border-radius: 50%;
-    background: #3a3128; transition: background .2s, transform .2s;
+    display: block; width: 6px; height: 6px; border-radius: 3px;
+    background: var(--secondary);
+    transition: width .25s ease, background .25s;
   }
   .dots button.done i { background: var(--ember-dim); }
-  .dots button.on i { background: var(--ember); transform: scale(1.5); }
+  .dots button.on i { width: 24px; background-image: var(--gradient-ember); }
 
   /* ---- stage ---- */
   .stage {
     flex: 1;
     display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
     text-align: center;
-    position: relative;
-    padding: 6px 0 14px;
-    min-height: 380px;
+    position: relative; overflow: hidden;
+    padding: 20px 18px 18px;
+    border-radius: var(--radius-xl);
     transition: transform .2s cubic-bezier(.2,.8,.3,1);
     touch-action: pan-y;
+  }
+  /* 中身は上下に伸びる。ボタンはカードの底に固定して高さのぶれを吸収する */
+  .stage-body {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center;
+    min-height: 260px;
+  }
+  /* 数字まわりは余った高さの真ん中に置く。カードの下に空白が溜まらない */
+  .stage-core {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    width: 100%;
+  }
+  /* カードの角に漂うぼかした熾火。試作のいちばんの見せ場 */
+  .glow {
+    position: absolute; top: -90px; right: -60px;
+    width: 220px; height: 220px; border-radius: 50%;
+    background-image: var(--gradient-ember);
+    opacity: .22; filter: blur(60px);
+    pointer-events: none;
   }
   .stage.dragging { transition: none; }
   .stage.enter-l { animation: enterL .24s ease-out; }
@@ -87,49 +154,59 @@
     to { transform: translateX(0); opacity: 1; }
   }
   .beat {
-    position: absolute; inset: -20px 0; pointer-events: none;
-    background: radial-gradient(circle at 50% 50%, rgba(255,122,47,.2), transparent 62%);
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(circle at 50% 50%,
+      color-mix(in oklab, var(--ember) 20%, transparent), transparent 62%);
     opacity: 0; transition: opacity .14s;
   }
   .beat.flash { opacity: 1; transition: opacity 0s; }
 
   .ex-title {
-    display: flex; align-items: center; justify-content: center; gap: 9px;
-    padding: 4px 6px; max-width: 100%; flex-wrap: wrap;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 2px; max-width: 100%;
   }
   .ex-title .name {
-    color: var(--text); font-size: 23px; font-weight: 700; letter-spacing: .02em;
+    font-family: var(--font-display);
+    color: var(--text); font-size: 23px; font-weight: 700; letter-spacing: -.01em;
     max-width: 100%; line-height: 1.25;
   }
   .help-btn {
-    flex: 0 0 auto;
-    width: 23px; height: 23px; border-radius: 50%;
+    position: absolute; top: 16px; right: 16px; z-index: 1;
+    width: 28px; height: 28px; border-radius: 50%;
     background: transparent; color: var(--text-dim);
-    border: 1.5px solid #4a4034;
+    border: 1.5px solid var(--border);
     font-size: 13px; font-weight: 700; line-height: 1;
     display: flex; align-items: center; justify-content: center;
     transition: background .18s, color .18s, border-color .18s;
   }
-  .help-btn.open { background: var(--ember-dim); color: var(--text); border-color: var(--ember-dim); }
-  .ex-meta { font-size: 12px; color: var(--text-dim); letter-spacing: .06em; margin-top: 1px; }
+  .help-btn.open {
+    background-image: var(--gradient-ember); color: var(--bg);
+    border-color: transparent;
+  }
+  .ex-meta { margin-bottom: 10px; padding: 0 34px; }
 
   .howto {
     max-width: 340px; font-size: 13px; line-height: 1.85; color: var(--text-dim);
-    background: var(--surface); border-radius: 14px;
+    background-image: var(--gradient-surface);
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
     padding: 0 14px; margin-top: 10px;
     max-height: 0; overflow: hidden; opacity: 0;
     transition: max-height .25s ease, opacity .2s, padding .25s;
     text-align: left;
-    white-space: pre-line;   /* ウォームアップの手順を1行ずつ表示するため */
   }
   .howto.open { max-height: 560px; opacity: 1; padding: 13px 14px; }
 
   .time {
-    font-size: 92px; font-weight: 200; line-height: 1;
-    font-variant-numeric: tabular-nums; letter-spacing: -.03em;
-    margin: 18px 0 4px;
+    font-family: var(--font-display);
+    font-size: 92px; font-weight: 500; line-height: 1;
+    font-variant-numeric: tabular-nums; letter-spacing: -.04em;
+    margin: 20px 0 6px;
   }
-  .time.count-down { color: var(--ember); }
+  /* カウントダウン中だけ、数字そのものを熾火のグラデーションで塗る */
+  .time.count-down {
+    background-image: var(--gradient-ember);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
   .time.done { color: var(--green); }
   .time.prep { color: var(--text-dim); }
   .time.tiny { font-size: 44px; letter-spacing: 0; }
@@ -138,24 +215,47 @@
     font-size: 15px; letter-spacing: .32em; font-weight: 700;
     color: var(--ember); min-height: 21px;
   }
-  .sub { font-size: 14px; color: var(--text-dim); min-height: 40px; padding: 4px 8px 0; line-height: 1.6; }
+  .sub { font-size: 13px; color: var(--text-dim); min-height: 38px; padding: 4px 4px 0; line-height: 1.6; }
   .sub b { color: var(--text); font-weight: 700; }
+
+  /* テンポ・セット・休憩。試作の3列チップ */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; margin-top: 10px; }
+  .stats div {
+    background: color-mix(in oklab, var(--secondary) 55%, transparent);
+    border-radius: var(--radius); padding: 11px 4px;
+  }
+  .stats dt {
+    font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .stats dd {
+    font-family: var(--font-display); font-variant-numeric: tabular-nums;
+    font-size: 15px; font-weight: 700; margin-top: 4px;
+  }
 
   /* ---- actions ---- */
   .main-btn {
-    width: 100%; border-radius: var(--radius);
-    padding: 23px; font-size: 20px; font-weight: 700;
-    background: var(--ember); color: #1c1207;
-    letter-spacing: .1em; transition: filter .1s;
+    position: relative; width: 100%; border-radius: var(--radius-lg);
+    margin-top: 20px;
+    padding: 19px; font-size: 18px; font-weight: 700;
+    background-image: var(--gradient-ember); color: var(--bg);
+    box-shadow: var(--shadow-ember);
+    letter-spacing: .06em; transition: filter .1s, box-shadow .2s;
   }
-  .main-btn:active { filter: brightness(.85); }
-  .main-btn.running { background: var(--surface-2); color: var(--text); }
-  .foot { display: flex; justify-content: center; gap: 22px; padding: 12px 0 2px; min-height: 42px; }
+  .main-btn:active { filter: brightness(.9); }
+  /* 計測中は主役ではなくなるので、光を消して面に沈める */
+  .main-btn.running {
+    background-image: none; background-color: var(--secondary);
+    color: var(--text); box-shadow: var(--shadow-soft);
+  }
+  .foot { display: flex; justify-content: center; gap: 10px; padding: 10px 0 2px; min-height: 44px; }
   .foot button {
-    background: transparent; color: var(--text-dim);
-    font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 13px; font-weight: 600; padding: 9px 20px; border-radius: 999px;
+    transition: color .2s, border-color .2s;
   }
-  .foot button:active { background: var(--surface); }
+  .foot button:active { color: var(--text); border-color: var(--ember-dim); }
   .foot button.hide { display: none; }
 
   /* ---- sheets ---- */
@@ -166,7 +266,10 @@
   .sheet-bg.open { opacity: 1; pointer-events: auto; }
   .sheet {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 11;
-    background: var(--bg); border-radius: 20px 20px 0 0;
+    background-image: var(--gradient-surface);
+    background-color: var(--bg);
+    border: 1px solid var(--border); border-bottom: 0;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: 6px 16px max(20px, env(safe-area-inset-bottom));
     max-height: 88vh; overflow-y: auto;
     transform: translateY(101%); transition: transform .26s cubic-bezier(.2,.8,.3,1);
@@ -174,34 +277,48 @@
   }
   .sheet.open { transform: translateY(0); }
   .sheet-inner { max-width: 420px; margin: 0 auto; }
-  .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--surface-2); margin: 8px auto 14px; }
-  .sheet h2 { font-size: 15px; font-weight: 700; margin-bottom: 14px; letter-spacing: .06em; }
+  .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--secondary); margin: 8px auto 14px; }
+  .sheet h2 {
+    font-family: var(--font-display);
+    font-size: 17px; font-weight: 700; margin-bottom: 14px; letter-spacing: -.01em;
+  }
   .sheet section { margin-bottom: 22px; }
 
   .row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
   .row .label { font-size: 12px; color: var(--text-dim); flex: 0 0 4.2em; white-space: nowrap; }
-  .seg { display: flex; flex: 1; background: var(--surface); border-radius: 10px; padding: 3px; }
+  .seg {
+    display: flex; flex: 1; padding: 3px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px;
+  }
   .seg button {
     flex: 1; background: transparent; color: var(--text-dim);
-    font-size: 13px; font-weight: 600; padding: 9px 4px; border-radius: 8px;
-    transition: background .15s, color .15s;
+    font-size: 13px; font-weight: 600; padding: 9px 4px; border-radius: 999px;
+    transition: background .25s, color .25s;
   }
-  .seg button.on { background: var(--ember-dim); color: var(--text); }
+  .seg button.on { background-image: var(--gradient-ember); color: var(--bg); }
   .seg button small { display: block; font-size: 10px; opacity: .7; margin-top: 1px; }
-  .stepper { display: flex; flex: 1; align-items: center; background: var(--surface); border-radius: 10px; padding: 3px; }
+  .stepper {
+    display: flex; flex: 1; align-items: center; padding: 3px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+  }
   .stepper button { flex: 0 0 46px; background: transparent; color: var(--ember); font-size: 18px; font-weight: 700; padding: 9px 0; border-radius: 8px; }
   .stepper button:active { background: var(--ember-dim); color: var(--text); }
   .stepper .week-disp { flex: 1; text-align: center; font-size: 13px; font-weight: 600; }
   .stepper .week-disp small { color: var(--text-dim); }
 
-  .rec-day { font-size: 12px; color: var(--ember); font-weight: 700; margin-bottom: 8px; }
+  .rec-day {
+    font-size: 11px; color: var(--text-dim); font-weight: 600;
+    letter-spacing: .18em; text-transform: uppercase; margin-bottom: 10px;
+  }
   .rec-row {
     display: flex; align-items: baseline; gap: 10px;
-    font-size: 14px; padding: 9px 11px; margin-bottom: 6px;
-    background: var(--surface); border-radius: 10px;
+    font-size: 14px; padding: 11px 13px; margin-bottom: 6px;
+    background-image: var(--gradient-surface);
+    border: 1px solid var(--border); border-radius: var(--radius);
   }
   .rec-row .n { color: var(--text-dim); font-size: 12px; flex: 1; }
-  .rec-row .s { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .rec-row .s { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; }
   .rec-row .r { color: var(--text-dim); font-size: 11px; }
   .empty { font-size: 13px; color: var(--text-dim); text-align: center; padding: 14px; }
 
@@ -218,11 +335,13 @@
 
   .btn-row { display: flex; gap: 8px; }
   .btn-row button {
-    flex: 1; border-radius: 10px; padding: 13px 8px;
-    background: var(--surface); color: var(--text);
+    flex: 1; border-radius: var(--radius); padding: 14px 8px;
+    background-image: var(--gradient-surface);
+    border: 1px solid var(--border); color: var(--text);
     font-size: 13px; font-weight: 600;
+    transition: transform .2s, border-color .2s;
   }
-  .btn-row button:active { background: var(--ember-dim); }
+  .btn-row button:active { transform: translateY(1px); border-color: var(--ember-dim); }
   .msg { font-size: 12px; color: var(--green); min-height: 17px; margin-top: 9px; }
   .note { font-size: 11px; color: var(--text-dim); line-height: 1.8; }
   .danger { color: var(--ember) !important; }
@@ -234,7 +353,7 @@
   font-size: 11px; color: var(--text-dim); white-space: nowrap;
 }
 .body-grid input {
-  width: 100%; min-width: 0; border: 0; border-radius: 8px;
+  width: 100%; min-width: 0; border: 1px solid var(--border); border-radius: 12px;
   background: var(--surface); color: var(--text);
   font-size: 16px; font-family: inherit; font-variant-numeric: tabular-nums;
   padding: 9px 6px; text-align: center;
@@ -255,18 +374,33 @@
   /* 高さの上限に収まる幅を選ぶ。こうすると黒帯が出ず、枠＝映像になる */
   width: min(100%, calc(46vh * var(--ar)));
   aspect-ratio: var(--ar); max-height: 46vh;
-  background: #000; border-radius: 14px; overflow: hidden;
+  background: #000; border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden;
 }
 .camera-wrap video { width: 100%; height: 100%; object-fit: contain; display: block; }
 /* ここに液晶を入れてもらう枠。中身を原寸で切り出して読むので、収まっていると
    認識がいちばん良くなる。はみ出してもフレーム全体の読み取りが受け止める。 */
 .scan-guide {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: 84%; max-height: 70%; aspect-ratio: 5 / 2;
+  width: var(--guide-w, 84%); max-height: 70%; aspect-ratio: 5 / 2;
+  transition: width .12s ease;
   border: 2px solid rgba(255, 122, 47, .75); border-radius: 8px;
   box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .35);
   pointer-events: none;
 }
+/* ズーム。床に置いた液晶を、しゃがまずに大きく捉えるための操作 */
+.zoom-row { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; }
+.zoom-row[hidden] { display: none; }
+.zoom-label { font-size: 12px; color: var(--text-dim); flex: 0 0 auto; }
+.zoom-value {
+  font-size: 13px; color: var(--text); font-variant-numeric: tabular-nums;
+  flex: 0 0 3.2em; text-align: right;
+}
+.zoom-row input[type="range"] {
+  flex: 1; min-width: 0; height: 28px;
+  accent-color: var(--ember); background: transparent;
+}
+
 .scan-status { font-size: 13px; color: var(--text-dim); min-height: 20px; text-align: center; }
 .scan-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
 .scan-chip {
@@ -279,27 +413,36 @@
 /* ---- 食事 ---- */
 .protein-head { display: flex; align-items: baseline; gap: 6px; justify-content: center; padding: 2px 0 10px; }
 .protein-head .now {
-  font-size: 46px; font-weight: 200; line-height: 1;
-  font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+  font-family: var(--font-display);
+  font-size: 52px; font-weight: 600; line-height: 1;
+  font-variant-numeric: tabular-nums; letter-spacing: -.03em;
+  background-image: var(--gradient-ember);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.protein-head .now.hit { color: var(--green); }
+.protein-head .now.hit { background-image: none; color: var(--green); }
 .protein-head .goal { font-size: 14px; color: var(--text-dim); }
-.bar { height: 6px; border-radius: 3px; background: var(--surface); overflow: hidden; }
-.bar i { display: block; height: 100%; width: 0; background: var(--ember); transition: width .25s ease, background .25s; }
-.bar i.hit { background: var(--green); }
+.bar { height: 3px; border-radius: 999px; background: var(--secondary); overflow: hidden; }
+.bar i {
+  display: block; height: 100%; width: 0;
+  background-image: var(--gradient-ember);
+  transition: width .25s ease;
+}
+.bar i.hit { background-image: none; background-color: var(--green); }
 
 .food-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0 8px; }
 .food-grid button {
-  background: var(--surface); color: var(--text);
-  border-radius: 10px; padding: 10px 4px; font-size: 12px; font-weight: 600;
+  background-image: var(--gradient-surface);
+  border: 1px solid var(--border); color: var(--text);
+  border-radius: var(--radius); padding: 12px 4px; font-size: 12px; font-weight: 600;
   line-height: 1.3; min-width: 0;
+  transition: transform .2s, border-color .2s;
 }
-.food-grid button:active { background: var(--ember-dim); }
+.food-grid button:active { transform: translateY(1px); border-color: var(--ember-dim); }
 .food-grid button small { display: block; font-size: 10px; color: var(--text-dim); margin-top: 2px; }
 
 .free-row { display: flex; gap: 8px; margin-top: 6px; }
 .free-row input {
-  flex: 1; min-width: 0; border: 0; border-radius: 10px;
+  flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 12px;
   background: var(--surface); color: var(--text);
   font-size: 16px; font-family: inherit; padding: 11px 10px;
 }
@@ -320,14 +463,19 @@
 
 .target-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .target-grid div {
-  background: var(--surface); border-radius: 10px; padding: 10px 4px; text-align: center;
+  background-image: var(--gradient-surface);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 4px; text-align: center;
 }
 .target-grid .k { font-size: 10px; color: var(--text-dim); display: block; }
-.target-grid .v { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.target-grid .v {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
 .target-grid .u { font-size: 10px; color: var(--text-dim); }
 
 .field {
-  flex: 1; min-width: 0; border: 0; border-radius: 10px;
+  flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 12px;
   background: var(--surface); color: var(--text);
   font-size: 16px; font-family: inherit; font-variant-numeric: tabular-nums;
   padding: 11px 10px; text-align: center;
@@ -367,7 +515,7 @@
   object-fit: cover;
 }
 .howto-video[hidden] { display: none; }
-.howto-text { margin: 0; }
+.howto-text { margin: 0; white-space: pre-line; }   /* ウォームアップの手順を1行ずつ */
 
 /* ---- 初回の文字サイズ選択 ---- */
 .first-run {
@@ -394,19 +542,20 @@
 /* ---- 大きい文字 ---- */
 /* 運動中は端末を床に置く。1m前後の距離から読めることを基準にする。
    メイン画面は思い切り大きく、手元で読むシート類は控えめに上げる。 */
-body.text-large .time { font-size: 150px; }
+body.text-large .time { font-size: 128px; }
 body.text-large .time.tiny { font-size: 64px; }
 body.text-large .ex-title .name { font-size: 34px; }
 body.text-large .ex-meta { font-size: 19px; }
 body.text-large .phase { font-size: 26px; letter-spacing: .2em; min-height: 34px; }
-body.text-large .sub { font-size: 23px; min-height: 62px; line-height: 1.5; }
-body.text-large .main-btn { font-size: 30px; padding: 30px; }
+body.text-large .sub { font-size: 23px; min-height: 52px; line-height: 1.5; }
+body.text-large .main-btn { font-size: 30px; padding: 24px; }
 body.text-large .foot button { font-size: 18px; padding: 10px 14px; }
-body.text-large header h1 { font-size: 18px; }
+body.text-large .eyebrow { font-size: 13px; }
+body.text-large .day-title { font-size: 36px; }
 body.text-large .dots i { width: 13px; height: 13px; }
 body.text-large .dots button { padding: 9px 6px; }
-body.text-large .icon-btn { font-size: 26px; }
-body.text-large .help-btn { width: 30px; height: 30px; font-size: 17px; border-width: 2px; }
+body.text-large .icon-btn { width: 50px; height: 50px; font-size: 24px; }
+body.text-large .help-btn { width: 34px; height: 34px; font-size: 18px; border-width: 2px; }
 body.text-large .howto { font-size: 18px; max-width: 100%; }
 body.text-large .howto.open { max-height: 760px; }
 
@@ -429,6 +578,7 @@ body.text-large .btn-row button { font-size: 16px; }
 body.text-large .msg { font-size: 15px; }
 body.text-large .scan-status { font-size: 16px; }
 body.text-large .scan-chip { font-size: 15px; }
+body.text-large .zoom-label, body.text-large .zoom-value { font-size: 16px; }
 body.text-large .protein-head .now { font-size: 62px; }
 body.text-large .protein-head .goal { font-size: 18px; }
 body.text-large .food-grid button { font-size: 15px; }

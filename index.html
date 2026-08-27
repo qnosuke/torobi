@@ -15,29 +15,37 @@
 <body>
 <div class="app">
   <header>
-    <h1>TOROBI<span>🔥</span></h1>
+    <div class="head-main">
+      <p class="eyebrow" id="weekEyebrow">第1週 ／ 火をつける</p>
+      <h1 class="day-title" id="dayTitle">肩の日</h1>
+    </div>
     <button class="icon-btn" id="openSettings" aria-label="設定">🧑‍🍳</button>
   </header>
 
-  <div class="dots" id="dots"></div>
-
-  <div class="stage">
+  <section class="stage panel">
+    <div class="glow" aria-hidden="true"></div>
     <div class="beat" id="beatFlash"></div>
-    <div class="ex-title">
-      <span class="name" id="exNameText">—</span>
-      <button class="help-btn" id="helpBtn" aria-label="やり方を見る">?</button>
+    <button class="help-btn" id="helpBtn" aria-label="やり方を見る">?</button>
+    <div class="stage-body">
+      <div class="stage-core">
+        <div class="ex-meta eyebrow" id="exMeta"></div>
+        <div class="ex-title">
+          <span class="name" id="exNameText">—</span>
+        </div>
+        <div class="howto" id="howto">
+          <video class="howto-video" id="howtoVideo" muted loop playsinline preload="none" hidden></video>
+          <p class="howto-text" id="howtoText"></p>
+        </div>
+        <div class="time" id="timeDisp">0</div>
+        <div class="phase" id="phaseDisp"></div>
+        <div class="sub" id="subDisp"></div>
+      </div>
+      <dl class="stats" id="stats"></dl>
     </div>
-    <div class="ex-meta" id="exMeta"></div>
-    <div class="howto" id="howto">
-      <video class="howto-video" id="howtoVideo" muted loop playsinline preload="none" hidden></video>
-      <p class="howto-text" id="howtoText"></p>
-    </div>
-    <div class="time" id="timeDisp">0</div>
-    <div class="phase" id="phaseDisp"></div>
-    <div class="sub" id="subDisp"></div>
-  </div>
+    <button class="main-btn" id="mainBtn">開始</button>
+  </section>
 
-  <button class="main-btn" id="mainBtn">開始</button>
+  <div class="dots" id="dots"></div>
 
   <div class="foot">
     <button id="openRecord">記録</button>
@@ -248,6 +256,11 @@
       <video id="scanVideo" autoplay playsinline muted></video>
       <div class="scan-guide" aria-hidden="true"></div>
     </div>
+    <div class="zoom-row" id="zoomRow" hidden>
+      <span class="zoom-label">ズーム</span>
+      <input type="range" id="zoomRange" min="1" max="4" step="0.1" value="1" aria-label="ズーム">
+      <span class="zoom-value" id="zoomValue">1.0×</span>
+    </div>
     <div class="scan-status" id="scanStatus"></div>
     <div class="scan-chips" id="scanChips"></div>
     <div class="btn-row">
@@ -255,9 +268,10 @@
       <button id="scanFinish" hidden>ここで終了</button>
     </div>
     <p class="note">
-      読み取り開始を押してから体組成計に乗り、<b>数字が枠いっぱいに入るように近づけてください。</b>
+      読み取り開始を押してから体組成計に乗り、<b>数字が枠いっぱいに入るようにしてください。</b>
+      床に置いたまま立って構えると数字が小さすぎて読めないので、<b>近づくか、ズームを上げてください。</b><br>
       枠からはみ出しても、画面のどこかに数字があれば読めます（枠の中と画面全体の両方を見ています）。
-      ただし<b>枠に収まっているときが一番よく読めます。</b>遠いままだとほとんど読めません。<br>
+      ただし枠に収まっているときが一番よく読めます。<br>
       7項目そろうと自動で閉じ、記録シートの入力欄に入ります。読み違いはその場で直せます。
     </p>
   </div>
